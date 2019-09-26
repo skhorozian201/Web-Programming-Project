@@ -1,0 +1,19 @@
+{
+  "name": "webprogproject",
+  "version": "1.0.0",
+  "description": "This is a team-based 4v4 (currently) PvP game. Players are score points for their team by defeating players on the opposing team.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skhorozian201/Web-Programming-Project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/skhorozian201/Web-Programming-Project/issues"
+  },
+  "homepage": "https://github.com/skhorozian201/Web-Programming-Project#readme"
+}
