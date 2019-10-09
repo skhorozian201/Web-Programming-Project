@@ -1,33 +1,31 @@
 <!DOCTYPE html>
-
 <html>
-
 	<head>
 		<title>
-        	Website Test
-        </title>
+			Game
+		</title>
 	</head>
-	<body>
-		<h1>
-        	Your Names Should Be In The Paragraph Section
-        </h1>
-		<h2>
-        	Format: (Name) (ID)
-        </h2>
-		<p>
-        	Mohammed Boush H00289001
-        </p>
-		<p>
-        	Sarkis Garbis Khorozian H00327324
-        </p>
-		<p>
-                Baber Jan : H00339983 
-       </p>
-		<p>
-        	Abdullatif Kaissi : H00288494
-		</p>
-		<p>
-			*empty*
-		</p>
-	</body>
+
+	<script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+	<script>
+		var socket = io ();
+
+		var x_axis_position = 0;
+
+		var move = function ( x_input) {
+			socket.emit ('move x', {
+				input: x_input
+			}); 
+		}
+		
+		socket.on ('send position', function (data) {
+			x_axis_position = data.pos;
+			console.log (x_axis_position);
+		});
+	
+	</script>
+	<button onclick="move(-1)">Left</button>
+	<button onclick="move(1)">Right</button>
+
 </html>
