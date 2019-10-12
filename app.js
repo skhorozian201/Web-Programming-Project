@@ -10,23 +10,42 @@ app.use ('/client', express.static(__dirname + '/client'));
 serv.listen (2000);
 console.log ("Server started...");
 
+var SOCKET_LIST = {};
+
 var io = require ('socket.io') (serv,{});
 
 io.sockets.on ('connection', function (socket){
+    socket.id = Math.random ();
+    socket.x = 0;
+    socket.y = 0;
+
+    SOCKET_LIST [socket.id] = socket;
+
     console.log ('socket connection');
-
-    var player_position_x = 0;
     
-    socket.on ('move x', function(data){
-        player_position_x += 1 * data.input;
-        console.log (player_position_x);
-        send_position ();
+    socket.on ('disconnect',function(){
+        delete SOCKET_LIST [socket.id];
     });
-
-    function send_position () {
-        socket.emit ('send position', {
-            pos: player_position_x,
-        });
-    }
-    
 }); 
+
+setInterval (function () {
+    var pack = [];
+
+    for (var i in SOCKET_LIST) {
+        var socket = SOCKET_LIST [i];
+        socket.x++;
+        socket.y++;
+
+        pack.push ({
+            x:socket.x,
+            y:socket.y
+        });
+        
+    }
+    for (var i in SOCKET_LIST) {
+        var socket = SOCKET_LIST [i];
+        socket.emit ('newPosition', pack);
+    }
+
+    
+}, 1000/25);
