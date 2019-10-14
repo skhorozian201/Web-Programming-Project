@@ -6,7 +6,7 @@
 		</title>
 	</head>
 
-	<canvas id="myCanvas" width="500" height="500" style = "border:5px solid #000000"></canvas>
+	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000"></canvas>
 	
 	<script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
@@ -16,11 +16,37 @@
 		var ctx = canvas.getContext ("2d");
 
 		socket.on ('newPosition',function (data) {
-			ctx.clearRect (0,0,500,500);
+			ctx.clearRect (0,0,960,540);
 			
 			for (var i = 0; i < data.length; i++)
 				ctx.fillText ('P',data[i].x, data[i].y);
 		});
+
+		function sendMoveInput (posx, posy) {
+			socket.emit ('sendPosition', {
+				x: posx,
+				y: posy
+			});
+		}
+
+		function move (e) {
+			switch (e.keyCode) {
+				case 87:
+					sendMoveInput (0, 1);
+					break;
+				case 83:
+					sendMoveInput (0, -1);
+					break;
+				case 65:
+					sendMoveInput (-1, 0);
+					break;
+				case 68:
+					sendMoveInput (1, 0);
+					break;	
+			}
+		}
+
+		document.onkeydown = move;
 	</script>
 
 </html>
