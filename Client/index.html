@@ -14,8 +14,9 @@
 		var socket = io ();
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
+		ctx.font = "30px Arial";
 
-		socket.on ('newPosition',function (data) {
+		socket.on ('newPosition',function (data) { //This receives the data on the players movement and renders each and single player 
 			ctx.clearRect (0,0,960,540);
 			
 			for (var i = 0; i < data.length; i++)
@@ -23,14 +24,15 @@
 		});
 
 
-		var moveDirs = [false, false, false, false];
+		var moveDirs = [false, false, false, false]; //Movement input directions
 
-		function sendMoveInput () {
+		function sendMoveInput () { //This sends the data to the server
 			socket.emit ('sendMoveDirs', {
 				moveDirections: moveDirs
 			});
 		}
 
+		//This is just input
 		function movePress (e) {
 			switch (e.keyCode) {
 				case 87:
