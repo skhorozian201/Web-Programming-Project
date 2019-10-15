@@ -7,7 +7,7 @@
 	</head>
 
 	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000"></canvas>
-	
+
 	<script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
 	<script>
@@ -19,34 +19,62 @@
 			ctx.clearRect (0,0,960,540);
 			
 			for (var i = 0; i < data.length; i++)
-				ctx.fillText ('P',data[i].x, data[i].y);
+				ctx.fillText ("P",data[i].x, data[i].y);
 		});
 
-		function sendMoveInput (posx, posy) {
-			socket.emit ('sendPosition', {
-				x: posx,
-				y: posy
+
+		var moveDirs = [false, false, false, false];
+
+		function sendMoveInput () {
+			socket.emit ('sendMoveDirs', {
+				moveDirections: moveDirs
 			});
 		}
 
-		function move (e) {
+		function movePress (e) {
 			switch (e.keyCode) {
 				case 87:
-					sendMoveInput (0, 1);
+					moveDirs [3] = true;
+					sendMoveInput ();
 					break;
 				case 83:
-					sendMoveInput (0, -1);
+					moveDirs [2] = true;
+					sendMoveInput ();
 					break;
 				case 65:
-					sendMoveInput (-1, 0);
+					moveDirs [1] = true;
+					sendMoveInput ();
 					break;
 				case 68:
-					sendMoveInput (1, 0);
+					moveDirs [0] = true;
+					sendMoveInput ();
 					break;	
 			}
 		}
 
-		document.onkeydown = move;
+		function moveLift (e) {
+			switch (e.keyCode) {
+				case 87:
+					moveDirs [3] = false;
+					sendMoveInput ();
+					break;
+				case 83:
+					moveDirs [2] = false;
+					sendMoveInput ();
+					break;
+				case 65:
+					moveDirs [1] = false;
+					sendMoveInput ();
+					break;
+				case 68:
+					moveDirs [0] = false;
+					sendMoveInput ();
+					break;	
+			}
+		}
+
+		document.onkeydown = movePress;
+		document.onkeyup = moveLift;
 	</script>
 
 </html>
