@@ -77,7 +77,7 @@
 
 		var attackClick = [false, false];
 		function sendAttackInput () { //This sends the attack (based on click) data to the server via socket.
-			socket.emit ('sendAttack', {
+			socket.emit ('sendAttackInput', {
 				attackTypeClick: attackClick
 			});
 		}
