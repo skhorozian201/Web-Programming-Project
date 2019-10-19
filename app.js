@@ -56,6 +56,9 @@ class Player {
         this.isImmune = false; //This is when the player is immune to damage
         this.isUntargetable = false; //This is when the cannot be interacted with
 
+        this.primaryAttack = false; //This is when the player uses left click to deal primary attack.
+        this.secondaryAttack = false; //This is when the player uses right click to deal secondary attack.
+
         
 
 
@@ -78,6 +81,15 @@ class Player {
 
         return damage; //Return the damage incase it changes... somehow...
     }
+
+    AttackClick(event) {
+         if(event.button = 0) // 0 is the number for left click.
+            this.primaryAttack;
+         else if(event.button = 2) //2 is the number for right click.
+            this.secondaryAttack;   
+
+    }
+    
 
     //Called to restore current health to this player
     //heal is the number
