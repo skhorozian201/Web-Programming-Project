@@ -31,7 +31,7 @@
 				moveDirections: moveDirs
 			});
 		}
-
+         
 		//This is just input
 		function movePress (e) {
 			switch (e.keyCode) {
@@ -74,6 +74,29 @@
 					break;	
 			}
 		}
+		var attackClick = [false, false];
+		function sendAttackInput () { //This sends the attack (based on click) data to the server via socket.
+			socket.emit ('sendAttack', {
+				attackTypeClick: attackClick
+			});
+		}
+
+
+		function AttackClick(event) {
+         if(event.button = 0) // 0 is the number for left click, which is the primary attack.
+            this.primaryAttack = true;
+         else if(event.button = 2) //2 is the number for right click, which is the secondary attack.
+			this.secondaryAttack = true;
+			
+		}
+
+		function ClickLifted() { //this function stops either the primary or the secondary attack as soon as the click is lifted 
+			if(event.button = null)
+			   this.primaryAttack = false; 
+			   this.secondaryAttack = false;
+		}
+
+        
 
 		document.onkeydown = movePress;
 		document.onkeyup = moveLift;

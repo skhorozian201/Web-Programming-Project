@@ -82,13 +82,7 @@ class Player {
         return damage; //Return the damage incase it changes... somehow...
     }
 
-    AttackClick(event) {
-         if(event.button = 0) // 0 is the number for left click.
-            this.primaryAttack;
-         else if(event.button = 2) //2 is the number for right click.
-            this.secondaryAttack;   
-
-    }
+   
     
 
     //Called to restore current health to this player
