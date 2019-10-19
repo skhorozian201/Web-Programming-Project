@@ -144,6 +144,12 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].moveRightInput = data.moveDirections[2],
         PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3]
     });
+    socket.on ('sendAttack',function (data) { //This is to receive the data of the players attack choice input from the client
+        PLAYER_LIST [socket.id].primaryAttack = data.attackTypeClick[0],
+        PLAYER_LIST [socket.id].secondaryAttack = data.attackTypeClick[1]
+    });
+
+
 }); 
 
 //This is the server's update function
