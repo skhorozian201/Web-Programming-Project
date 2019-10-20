@@ -4,6 +4,9 @@
 		<title>
 			Game
 		</title>
+		<a>
+			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px;"></img>
+		</a>
 	</head>
 
 	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000"></canvas>
@@ -14,13 +17,17 @@
 		var socket = io ();
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
+		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
 		ctx.font = "30px Arial";
 
-		socket.on ('newPosition',function (data) { //This receives the data on the players movement and renders each and single player 
+		socket.on ('newPosition',function (data) //This receives the data on the players movement and renders each and single player
+		{
 			ctx.clearRect (0,0,960,540);
-			
 			for (var i = 0; i < data.length; i++)
-				ctx.fillText ("P",data[i].x, data[i].y);
+			{
+				ctx.fillText ( "Player Name",data[i].x, data[i].y);
+				ctx.drawImage ( playerImage, data[i].x , data[i].y );
+			}
 		});
 
 
