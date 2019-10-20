@@ -20,6 +20,8 @@
 		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
 		ctx.font = "30px Arial";
 
+		document.addEventListener('contextmenu', event => event.preventDefault());
+
 		socket.on ('newPosition',function (data) //This receives the data on the players movement and renders each and single player
 		{
 			ctx.clearRect (0,0,960,540);
@@ -85,10 +87,10 @@
 		var attackClick = [false, false];
 		function sendAttackInput () { //This sends the attack (based on click) data to the server via socket.
 			socket.emit ('sendAttackInput', {
-				attackTypeClick: attackClick
+				primary: attackClick [0], 
+				secondary: attackClick [1]
 			});
 		}
-
 
 		function attackClick(event) {
 			switch (event.button){
@@ -103,7 +105,6 @@
 			}	
 		}
 
-      
 		function clickLifted(event) {
 			switch (event.button){
 				case 0 :   // 0 is the number for left click, which is the primary attack.
@@ -117,10 +118,10 @@
 			}	
 		}
 
-        
-        
 		document.onkeydown = movePress;
 		document.onkeyup = moveLift;
+		document.onmousedown = attackClick;
+		document.onmouseup = clickLifted;
 	</script>
 
 </html>

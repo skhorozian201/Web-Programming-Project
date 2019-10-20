@@ -37,6 +37,9 @@ class Player {
         this.moveRightInput = false; //Is the player pressing 'D' key
         this.moveLeftInput = false; //Is the player pressing 'A' key
 
+        this.primaryAttack = false; //Is the player pressing Left Mouse
+        this.secondaryAttack = false; //Is the player pressing Right Mouse
+
         //List of Functions:
 
         //Perferably don't touch or use these.
@@ -58,12 +61,19 @@ class Player {
         this.isImmune = false; //This is when the player is immune to damage
         this.isUntargetable = false; //This is when the cannot be interacted with
 
-        this.primaryAttack = false; //This is when the player uses left click to deal primary attack.
-        this.secondaryAttack = false; //This is when the player uses right click to deal secondary attack.
+        
 
         
 
 
+    }
+
+    PrimaryAttackFunc () {
+        console.log (this.id + (" attempted a primary attack.") );
+    }
+
+    SecondaryAttackFunc () {
+        console.log (this.id + (" attempted a secondary attack.") );
     }
 
     //Called to deal damage to this player
@@ -155,8 +165,9 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3]
     });
     socket.on ('sendAttackInput',function (data) { //This is to receive the data of the players attack choice input from the client
-        PLAYER_LIST [socket.id].primaryAttack = data.attackTypeClick[0],
-        PLAYER_LIST [socket.id].secondaryAttack = data.attackTypeClick[1]
+        PLAYER_LIST [socket.id].primaryAttack = data.primary,
+        PLAYER_LIST [socket.id].secondaryAttack = data;
+        
     });
 
 
@@ -184,6 +195,12 @@ setInterval (function () {
             player.y_position += player.moveSpeed;
         } else if (player.moveLeftInput) {
             player.y_position -= player.moveSpeed;            
+        }
+
+        if (player.primaryAttack) {
+       //     player.PrimaryAttackFunc ();
+        } else if (player.secondaryAttack) {
+       //     player.SecondaryAttackFunc ();
         }
 
         //This adds the new position data to the list
