@@ -58,6 +58,9 @@ class Player {
         this.isImmune = false; //This is when the player is immune to damage
         this.isUntargetable = false; //This is when the cannot be interacted with
 
+        this.primaryAttack = false; //This is when the player uses left click to deal primary attack.
+        this.secondaryAttack = false; //This is when the player uses right click to deal secondary attack.
+
         
 
 
@@ -80,6 +83,9 @@ class Player {
 
         return damage; //Return the damage incase it changes... somehow...
     }
+
+   
+    
 
     //Called to restore current health to this player
     //heal is the number
@@ -148,6 +154,12 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].moveRightInput = data.moveDirections[2],
         PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3]
     });
+    socket.on ('sendAttackInput',function (data) { //This is to receive the data of the players attack choice input from the client
+        PLAYER_LIST [socket.id].primaryAttack = data.attackTypeClick[0],
+        PLAYER_LIST [socket.id].secondaryAttack = data.attackTypeClick[1]
+    });
+
+
 }); 
 
 //This is the server's update function
