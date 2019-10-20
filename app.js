@@ -19,11 +19,10 @@ var io = require ('socket.io') (serv,{});
 class Player {
    
 
-    constructor (id, name,team,username) {
+    constructor (id, name,team) {
         this.id = id; //Player ID
         this.name = name; //Player Name
         this.team = team; //Player team
-        this.username=username//Player username
 
         this.x_position = 200; //Player position on the x-axis
         this.y_position = 200; //Player position on the y-axis
@@ -37,6 +36,9 @@ class Player {
         this.moveDownInput = false; //Is the player pressing 'S' key
         this.moveRightInput = false; //Is the player pressing 'D' key
         this.moveLeftInput = false; //Is the player pressing 'A' key
+
+        this.primaryAttack = false; //Is the player pressing Left Mouse
+        this.secondaryAttack = false; //Is the player pressing Right Mouse
 
         //List of Functions:
 
@@ -61,7 +63,17 @@ class Player {
 
         
 
+        
 
+
+    }
+
+    PrimaryAttackFunc () {
+        console.log (this.id + (" attempted a primary attack.") );
+    }
+
+    SecondaryAttackFunc () {
+        console.log (this.id + (" attempted a secondary attack.") );
     }
 
     //Called to deal damage to this player
@@ -81,6 +93,9 @@ class Player {
 
         return damage; //Return the damage incase it changes... somehow...
     }
+
+   
+    
 
     //Called to restore current health to this player
     //heal is the number
@@ -131,8 +146,8 @@ io.sockets.on ('connection', function (socket){
         current_team=1;
     } 
 
-    var player = new Player (socket.id,"Player " + socket.id, current_team,current_username); //constructs a new Player instance
-    PLAYER_LIST [socket.id] = player; //adds the new player to the lsit
+    var player = new Player (socket.id,"Player" + socket.id, current_team); //constructs a new Player instance
+    PLAYER_LIST [socket.id] = player; //adds the new player to the list
 
     console.log ('socket connection');
     
@@ -148,6 +163,13 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].moveRightInput = data.moveDirections[2],
         PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3]
     });
+    socket.on ('sendAttackInput',function (data) { //This is to receive the data of the players attack choice input from the client
+        PLAYER_LIST [socket.id].primaryAttack = data.primary,
+        PLAYER_LIST [socket.id].secondaryAttack = data;
+        
+    });
+
+
 }); 
 
 //This is the server's update function
@@ -172,6 +194,12 @@ setInterval (function () {
             player.y_position += player.moveSpeed;
         } else if (player.moveLeftInput) {
             player.y_position -= player.moveSpeed;            
+        }
+
+        if (player.primaryAttack) {
+       //     player.PrimaryAttackFunc ();
+        } else if (player.secondaryAttack) {
+       //     player.SecondaryAttackFunc ();
         }
 
         //This adds the new position data to the list

@@ -22,6 +22,8 @@
 		var current_username = prompt("Please enter your username",);//Creates a prompt and stores the values in current_username.
 		ctx.font = "30px Arial";
 
+		document.addEventListener('contextmenu', event => event.preventDefault());
+
 		socket.on ('newPosition',function (data) //This receives the data on the players movement and renders each and single player
 		{
 			ctx.clearRect (0,0,960,540);
@@ -40,7 +42,7 @@
 				moveDirections: moveDirs
 			});
 		}
-
+         
 		//This is just input
 		function movePress (e) {
 			switch (e.keyCode) {
@@ -84,8 +86,44 @@
 			}
 		}
 
+		var attackClick = [false, false];
+		function sendAttackInput () { //This sends the attack (based on click) data to the server via socket.
+			socket.emit ('sendAttackInput', {
+				primary: attackClick [0], 
+				secondary: attackClick [1]
+			});
+		}
+
+		function attackClick(event) {
+			switch (event.button){
+				case 0 :   // 0 is the number for left click, which is the primary attack.
+					attackClick[0] = true; //this triggers the primary attack.
+					sendAttackInput();
+					break;
+				case 2:    //2 is the number for right click, which is the secondary attack.
+					attackClick[1] = true; // this triggers the secondary attack.
+					sendAttackInput() ;
+					break ;
+			}	
+		}
+
+		function clickLifted(event) {
+			switch (event.button){
+				case 0 :   // 0 is the number for left click, which is the primary attack.
+					attackClick[0] = false; //this disables the primary attack when click is lifted.
+					sendAttackInput();
+					break;
+				case 2:    //2 is the number for right click, which is the secondary attack.
+					attackClick[1] = false; //
+					sendAttackInput(); //this disables the secondary attack when click is lifted.
+					break ;
+			}	
+		}
+
 		document.onkeydown = movePress;
 		document.onkeyup = moveLift;
+		document.onmousedown = attackClick;
+		document.onmouseup = clickLifted;
 	</script>
 
 </html>
