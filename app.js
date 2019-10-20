@@ -139,6 +139,7 @@ io.sockets.on ('connection', function (socket){
     socket.id = Math.random (); //creates a random ID for the new connection
     SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
     var current_team ;//Created a var for current team . it will have 2 values.
+
     //If length is even it will assign to team 2 else if its odd then it will be assigned team1. 
     if(SOCKET_LIST.length % 2 ==0){ 
         current_team = 2;
@@ -146,7 +147,7 @@ io.sockets.on ('connection', function (socket){
         current_team=1;
     } 
 
-    var player = new Player (socket.id,"Player" + socket.id, current_team); //constructs a new Player instance
+    var player = new Player (socket.id,"Player", current_team); //constructs a new Player instance
     PLAYER_LIST [socket.id] = player; //adds the new player to the list
 
     console.log ('socket connection');
@@ -168,6 +169,9 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].secondaryAttack = data;
         
     });
+    socket.on ('playerInitializationData', function (data) {
+        player.name = data.name;
+    });
 
 
 }); 
@@ -176,7 +180,7 @@ io.sockets.on ('connection', function (socket){
 //This does everything that's time based
 //It is called 24 times a second
 setInterval (function () {
-    var movePack = []; //The list of all player's position as a packet.
+    var playerDataPack = []; //The list of all player's position as a packet.
 
     //This is called for every instance of player
     //Use it as gameplay update function for each player
@@ -203,12 +207,12 @@ setInterval (function () {
         }
 
         //This adds the new position data to the list
-        movePack.push ({
+        playerDataPack.push ({
             x: player.x_position,
-            y: player.y_position
+            y: player.y_position,
+            name: player.name,
+            team: player.team
         });
-
-        
         
     }
 
@@ -216,7 +220,7 @@ setInterval (function () {
     //This sends data to the client
     for (var i in SOCKET_LIST) {
         var socket = SOCKET_LIST [i]; 
-        socket.emit ('newPosition', movePack); //Sending position data to all connections about every player's position
+        socket.emit ('newPlayerData', playerDataPack); //Sending position data to all connections about every player's position
     }
 
     
