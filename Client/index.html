@@ -7,6 +7,7 @@
 		<a>
 			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px;"></img>
 		</a>
+		
 	</head>
 
 	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000"></canvas>
@@ -18,6 +19,7 @@
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
 		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
+		var current_username = prompt("Please enter your username",);//Creates a prompt and stores the values in current_username.
 		ctx.font = "30px Arial";
 
 		document.addEventListener('contextmenu', event => event.preventDefault());
