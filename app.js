@@ -19,10 +19,11 @@ var io = require ('socket.io') (serv,{});
 class Player {
    
 
-    constructor (id, name,team) {
+    constructor (id, name,team,username) {
         this.id = id; //Player ID
         this.name = name; //Player Name
         this.team = team; //Player team
+        this.username=username//Player username
 
         this.x_position = 200; //Player position on the x-axis
         this.y_position = 200; //Player position on the y-axis
@@ -123,7 +124,6 @@ io.sockets.on ('connection', function (socket){
     socket.id = Math.random (); //creates a random ID for the new connection
     SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
     var current_team ;//Created a var for current team . it will have 2 values.
-    
     //If length is even it will assign to team 2 else if its odd then it will be assigned team1. 
     if(SOCKET_LIST.length % 2 ==0){ 
         current_team = 2;
@@ -131,7 +131,7 @@ io.sockets.on ('connection', function (socket){
         current_team=1;
     } 
 
-    var player = new Player (socket.id,"Player " + socket.id, current_team); //constructs a new Player instance
+    var player = new Player (socket.id,"Player " + socket.id, current_team,current_username); //constructs a new Player instance
     PLAYER_LIST [socket.id] = player; //adds the new player to the lsit
 
     console.log ('socket connection');

@@ -7,6 +7,7 @@
 		<a>
 			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px;"></img>
 		</a>
+		
 	</head>
 
 	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000"></canvas>
@@ -17,6 +18,7 @@
 		var socket = io ();
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
+		var current_username = prompt("Please enter your username",);//Creates a prompt and stores the values in current_username.
 		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
 		ctx.font = "30px Arial";
 
@@ -25,7 +27,7 @@
 			ctx.clearRect (0,0,960,540);
 			for (var i = 0; i < data.length; i++)
 			{
-				ctx.fillText ( "Player Name",data[i].x, data[i].y);
+				ctx.fillText ( current_username,data[i].x, data[i].y);
 				ctx.drawImage ( playerImage, data[i].x , data[i].y );
 			}
 		});
