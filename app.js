@@ -132,7 +132,7 @@ io.sockets.on ('connection', function (socket){
     } 
 
     var player = new Player (socket.id,"Player " + socket.id, current_team); //constructs a new Player instance
-    PLAYER_LIST [socket.id] = player; //adds the new player to the lsit
+    PLAYER_LIST [socket.id] = player; //adds the new player to the list
 
     console.log ('socket connection');
     
