@@ -5,7 +5,7 @@ var serv = require ('http').Server (app);
 app.get ('/', function (req, res) {
     res.sendFile (__dirname + '/client/index.html');
 });
-app.use ('/client', express.static(__dirname + '/client'));
+app.use (express.static('client')); //Allows for access of static files from within the "client" folder
 
 serv.listen (2000); //listens to port :2000
 console.log ("Server started...");
