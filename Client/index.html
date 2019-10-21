@@ -5,12 +5,12 @@
 			Game
 		</title>
 		<a>
-			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px;"></img>
+			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px; display: none;" ></img>
 		</a>
 		
 	</head>
 
-	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000"></canvas>
+	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000" ></canvas>
 
 	<script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
@@ -19,8 +19,12 @@
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
 		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
-		var current_name = prompt("Please enter your name",);//Creates a prompt and stores the values in current_username.
+		var current_name = prompt("Please enter your name", "Player");//Creates a prompt and stores the values in current_username.
 		
+		while (current_name == null || current_name ==  "") {
+			current_name = prompt("Please enter your name", "Player");
+		}
+
 		ctx.font = "30px Arial";
 
 		document.addEventListener('contextmenu', event => event.preventDefault());
@@ -34,8 +38,8 @@
 			ctx.clearRect (0,0,960,540);
 			for (var i = 0; i < data.length; i++)
 			{
-				ctx.fillText ( data[i].name, data[i].x, data[i].y);
-				ctx.drawImage ( playerImage, data[i].x , data[i].y );
+				ctx.fillText ( data[i].name, data[i].x + 20, data[i].y);
+				ctx.drawImage ( playerImage, data[i].x, data[i].y, 192, 192);
 			}
 		});
 

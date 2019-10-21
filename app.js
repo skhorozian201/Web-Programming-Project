@@ -27,6 +27,9 @@ class Player {
         this.x_position = 200; //Player position on the x-axis
         this.y_position = 200; //Player position on the y-axis
 
+        this.x_hitbox = 0;
+        this.y_hitbox = 0;
+
         this.maxHealth = 300; //Player maximum health
         this.currHealth = this.maxHealth; //Player CURRENT health
 
@@ -170,7 +173,7 @@ io.sockets.on ('connection', function (socket){
         
     });
     socket.on ('playerInitializationData', function (data) {
-        player.name = data.name;
+        PLAYER_LIST [socket.id].name = data.name;
     });
 
 
