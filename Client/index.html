@@ -39,7 +39,7 @@
 			for (var i = 0; i < data.length; i++)
 			{
 				ctx.fillText ( data[i].name, data[i].x + 20, data[i].y);
-				ctx.drawImage ( playerImage, data[i].x, data[i].y, 192, 192);
+				ctx.drawImage ( playerImage, data[i].x, data[i].y, 160, 160);
 			}
 		});
 
@@ -103,22 +103,22 @@
 			});
 		}
 
-		function attackClick(event) {
+		function attackDown(event) {
 			switch (event.button){
-				case 0 :   // 0 is the number for left click, which is the primary attack.
-					attackClick[0] = true; //this triggers the primary attack.
+				case 0:   // 0 is the number for left click, which is the primary attack.
+					attackClick[0] = true; //this disables the primary attack when click is lifted.
 					sendAttackInput();
 					break;
 				case 2:    //2 is the number for right click, which is the secondary attack.
-					attackClick[1] = true; // this triggers the secondary attack.
-					sendAttackInput() ;
-					break ;
+					attackClick[1] = true; //
+					sendAttackInput(); //this disables the secondary attack when click is lifted.
+					break;
 			}	
 		}
 
 		function clickLifted(event) {
 			switch (event.button){
-				case 0 :   // 0 is the number for left click, which is the primary attack.
+				case 0:   // 0 is the number for left click, which is the primary attack.
 					attackClick[0] = false; //this disables the primary attack when click is lifted.
 					sendAttackInput();
 					break;
@@ -131,8 +131,9 @@
 
 		document.onkeydown = movePress;
 		document.onkeyup = moveLift;
-		document.onmousedown = attackClick;
 		document.onmouseup = clickLifted;
+		document.onmousedown = attackDown;
+
 	</script>
 
 </html>

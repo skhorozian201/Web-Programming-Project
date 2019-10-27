@@ -12,8 +12,26 @@ console.log ("Server started...");
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
+var PROJECTILE_LIST = {}; //List of projectiles
 
 var io = require ('socket.io') (serv,{});
+
+//Projectiles
+class Porjectile {
+    constructor (x_init, y_init, angle, speed, owner) {
+        this.x_position = x_init; //x position
+        this.y_position = y_init; //y position
+
+        this.x_velocity = (Math.cos(angle)) * speed; //x velocity
+        this.y_velocity = (Math.sin(angle)) * speed; //y velocity
+
+        this.owner = owner; //The player that owns this
+
+        this.onCollisionEffect; //This function is called on collision with a player. (Player hit)
+        this.onExpireEffect; //This function is called on expire. 
+
+    }
+}
 
 //Player Class
 class Player {
@@ -24,7 +42,7 @@ class Player {
         this.name = name; //Player Name
         this.team = team; //Player team
 
-        if ( team == 1 ){
+        if ( this.team == 1 ){
             this.x_position = 200; //Player position on the x-axis
             this.y_position = 200; //Player position on the y-axis
         } else {
@@ -32,8 +50,8 @@ class Player {
             this.y_position = 600; //Player position on the y-axis
         }
 
-        this.x_hitbox = 192; //Player hitbox
-        this.y_hitbox = 192; //Player hitbox
+        this.x_hitbox = 160; //Player hitbox
+        this.y_hitbox = 160; //Player hitbox
 
         this.maxHealth = 300; //Player maximum health
         this.currHealth = this.maxHealth; //Player CURRENT health
@@ -72,11 +90,11 @@ class Player {
     }
 
     PrimaryAttackFunc () {
-        console.log (this.id + (" attempted a primary attack.") );
+        
     }
 
     SecondaryAttackFunc () {
-        console.log (this.id + (" attempted a secondary attack.") );
+        
     }
 
     //Called to deal damage to this player
@@ -169,8 +187,7 @@ io.sockets.on ('connection', function (socket){
     });
     socket.on ('sendAttackInput',function (data) { //This is to receive the data of the players attack choice input from the client
         PLAYER_LIST [socket.id].primaryAttack = data.primary,
-        PLAYER_LIST [socket.id].secondaryAttack = data;
-        
+        PLAYER_LIST [socket.id].secondaryAttack = data.secondary;
     });
     socket.on ('playerInitializationData', function (data) {
         PLAYER_LIST [socket.id].name = data.name;
@@ -204,9 +221,10 @@ setInterval (function () {
         }
 
         if (player.primaryAttack) {
-       //     player.PrimaryAttackFunc ();
-        } else if (player.secondaryAttack) {
-       //     player.SecondaryAttackFunc ();
+            player.PrimaryAttackFunc ();
+        }
+        if (player.secondaryAttack) {
+            player.SecondaryAttackFunc ();
         }
 
         //This adds the new position data to the list
