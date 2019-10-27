@@ -24,11 +24,16 @@ class Player {
         this.name = name; //Player Name
         this.team = team; //Player team
 
-        this.x_position = 200; //Player position on the x-axis
-        this.y_position = 200; //Player position on the y-axis
+        if ( team == 1 ){
+            this.x_position = 200; //Player position on the x-axis
+            this.y_position = 200; //Player position on the y-axis
+        } else {
+            this.x_position = 600; //Player position on the x-axis
+            this.y_position = 600; //Player position on the y-axis
+        }
 
-        this.x_hitbox = 0;
-        this.y_hitbox = 0;
+        this.x_hitbox = 192; //Player hitbox
+        this.y_hitbox = 192; //Player hitbox
 
         this.maxHealth = 300; //Player maximum health
         this.currHealth = this.maxHealth; //Player CURRENT health
@@ -63,11 +68,6 @@ class Player {
         this.isDead = false; //This is death...
         this.isImmune = false; //This is when the player is immune to damage
         this.isUntargetable = false; //This is when the cannot be interacted with
-
-        
-
-        
-
 
     }
 
