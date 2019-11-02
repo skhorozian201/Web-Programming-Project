@@ -18,12 +18,14 @@ var io = require ('socket.io') (serv,{});
 
 //Projectiles
 class Porjectile {
-    constructor (x_init, y_init, angle, speed, owner) {
+    constructor (x_init, y_init, angle, radius, speed, owner) {
         this.x_position = x_init; //x position
         this.y_position = y_init; //y position
 
         this.x_velocity = (Math.cos(angle)) * speed; //x velocity
         this.y_velocity = (Math.sin(angle)) * speed; //y velocity
+
+        this.radius = radius; //the radius of the projectile
 
         this.owner = owner; //The player that owns this
 
@@ -50,8 +52,7 @@ class Player {
             this.y_position = 600; //Player position on the y-axis
         }
 
-        this.x_hitbox = 160; //Player hitbox
-        this.y_hitbox = 160; //Player hitbox
+        this.radius = 300;
 
         this.maxHealth = 300; //Player maximum health
         this.currHealth = this.maxHealth; //Player CURRENT health
@@ -90,11 +91,11 @@ class Player {
     }
 
     PrimaryAttackFunc () {
-        
+        console.log (this.name + " attack");
     }
 
     SecondaryAttackFunc () {
-        
+        console.log (this.name + " attack");        
     }
 
     //Called to deal damage to this player
@@ -155,6 +156,14 @@ class Player {
 
 }
 
+//Use this function to get distance between two points
+function GetDistance (x1, y1, x2, y2) {
+    var final_x = x2-x1; 
+    var final_y = y2-y1;
+
+    return Math.sqrt (Math.pow(final_x,2) + Math.pow(final_y,2)); //Uses pythagorean theorem to find distance
+}
+
 //Please read Socket.io documentation as even I dont understand this
 io.sockets.on ('connection', function (socket){
     socket.id = Math.random (); //creates a random ID for the new connection
@@ -201,6 +210,7 @@ io.sockets.on ('connection', function (socket){
 //It is called 24 times a second
 setInterval (function () {
     var playerDataPack = []; //The list of all player's position as a packet.
+    var projectileDataPack = [];
 
     //This is called for every instance of player
     //Use it as gameplay update function for each player
@@ -235,6 +245,13 @@ setInterval (function () {
             team: player.team
         });
         
+    }
+
+    for (var i in PROJECTILE_LIST) {
+        var projectile = PROJECTILE_LIST [i];
+
+        projectile.x_position += projectile.speed * Math.cos (projectile.angle);
+        projectile.y_position += iprojectilespeed * Math.sin (projectile.angle);
     }
 
     //This is called for every socket (connection)
