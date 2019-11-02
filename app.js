@@ -58,7 +58,8 @@ class Player {
 
         this.primaryAttack = false; //This is when the player uses left click to deal primary attack.
         this.secondaryAttack = false; //This is when the player uses right click to deal secondary attack.
-
+        this.mousepositionX = false; //This is the y - coordinate for the current mouse positon.
+        this.mousepositionY = false; //This is the x - coordinate for the current mouse positon.
         
 
 
@@ -148,7 +149,10 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].primaryAttack = data.attackTypeClick[0],
         PLAYER_LIST [socket.id].secondaryAttack = data.attackTypeClick[1]
     });
-
+    socket.on('sendMousePosition', function (data) { //This is to recieve the data of the player's mouse positon.
+        PLAYER_LIST [socket.id].mousePosition = data.mousePosition
+    });
+    
 
 }); 
 
