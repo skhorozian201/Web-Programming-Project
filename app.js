@@ -42,12 +42,12 @@ class Player {
         this.name = name; //Player Name
         this.team = team; //Player team
 
-        if ( this.team == 1 ){
-            this.x_position = 200; //Player position on the x-axis
-            this.y_position = 200; //Player position on the y-axis
+        if ( this.team == 2 ){
+            this.x_position = 50; //Player position on the x-axis
+            this.y_position = 50; //Player position on the y-axis
         } else {
-            this.x_position = 600; //Player position on the x-axis
-            this.y_position = 600; //Player position on the y-axis
+            this.x_position = 780; //Player position on the x-axis
+            this.y_position = 320; //Player position on the y-axis
         }
 
         this.x_hitbox = 160; //Player hitbox
@@ -154,19 +154,28 @@ class Player {
     }
 
 }
-
+var team1 = 0;//Number of players in team 1.
+var team2 = 0;//Number of players in team 2.
 //Please read Socket.io documentation as even I dont understand this
 io.sockets.on ('connection', function (socket){
     socket.id = Math.random (); //creates a random ID for the new connection
     SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
-    var current_team ;//Created a var for current team . it will have 2 values.
-
-    //If length is even it will assign to team 2 else if its odd then it will be assigned team1. 
-    if(SOCKET_LIST.length % 2 ==0){ 
-        current_team = 2;
-    } else { 
-        current_team=1;
+    var current_team = 1 ;//Created a var for current team . it will have 2 values.
+    //When we have a new connection. To decide the team we check which team has less players. and add that player to that team.
+    if (team1 == team2){//if they are equal add that player to team 1.
+        current_team = 1;
+        team1 ++;
+        
     } 
+    else if (team1 > team2){//If players in team 1 are more than the players in team 2 . add the new player to team 2.
+        current_team = 2;
+        team2 ++;
+    } 
+    else if (team1 < team2){//If players in team 2 are more than the players in team 1 . add the new player to team 1.
+        current_team = 1;
+        team1 ++; 
+    }
+    
 
     var player = new Player (socket.id,"Player", current_team); //constructs a new Player instance
     PLAYER_LIST [socket.id] = player; //adds the new player to the list
@@ -174,6 +183,13 @@ io.sockets.on ('connection', function (socket){
     console.log ('socket connection');
     
     socket.on ('disconnect',function(){ //When a player disconnects from the game
+        //Just to balance the teams , so next spawn is on the team with less players.
+        if (player.team == 1){//If the player is from team 2 , minus 1 from team2
+            team1 --;
+        }
+        else if (player.team == 2){//If player is from team1 minus 1 from team 1
+            team2 --;
+        } 
         delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
         delete PLAYER_LIST[socket.id];
         console.log ('socket disconnet');
