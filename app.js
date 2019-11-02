@@ -155,7 +155,6 @@ class Player {
     }
 
 }
-<<<<<<< HEAD
 
 //Use this function to get distance between two points
 function GetDistance (x1, y1, x2, y2) {
@@ -165,10 +164,8 @@ function GetDistance (x1, y1, x2, y2) {
     return Math.sqrt (Math.pow(final_x,2) + Math.pow(final_y,2)); //Uses pythagorean theorem to find distance
 }
 
-=======
 var team1 = 0;//Number of players in team 1.
 var team2 = 0;//Number of players in team 2.
->>>>>>> f00d39bcc9af88f3cd66337520a1d48d19e36c84
 //Please read Socket.io documentation as even I dont understand this
 io.sockets.on ('connection', function (socket){
     socket.id = Math.random (); //creates a random ID for the new connection
