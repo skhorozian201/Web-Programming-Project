@@ -33,6 +33,14 @@ class Porjectile {
         this.onExpireEffect; //This function is called on expire. 
 
     }
+
+    OnCollision (hit) {
+        console.log (hit);
+    }
+
+    DestoryThis (i) {
+        delete PROJECTILE_LIST [i];
+    }
 }
 
 //Player Class
@@ -52,7 +60,7 @@ class Player {
             this.y_position = 320; //Player position on the y-axis
         }
 
-        this.radius = 300;
+        this.radius = 160;
 
         this.maxHealth = 300; //Player maximum health
         this.currHealth = this.maxHealth; //Player CURRENT health
@@ -269,6 +277,14 @@ setInterval (function () {
 
         projectile.x_position += projectile.speed * Math.cos (projectile.angle);
         projectile.y_position += iprojectilespeed * Math.sin (projectile.angle);
+
+        for (var i in PLAYER_LIST) {
+            var player = PLAYER_LIST [i];
+
+            if (GetDistance(player.x_position+80 ,player.y_position+80, projectile.x_position, projectile.y_position) <= projectile.radius + player.radius) {
+                projectile.onCollisionEffect ();
+            }
+        }
     }
 
     //This is called for every socket (connection)
