@@ -67,7 +67,7 @@ class Player {
         this.radius = 160;
 
         this.maxHealth = 300; //Player maximum health
-        this.currHealth = this.maxHealth; //Player CURRENT health
+        this.currentHealth = this.maxHealth; //Player CURRENT health
 
         this.moveSpeed = 5; //Player movement speed
 
@@ -120,12 +120,12 @@ class Player {
     TakeDamage (damage, dealer) {
 
         if (!this.isImmune) //If the player is not immune to damage
-            this.currHealth -= damage; //then subtract current health by damage
+            this.currentHealth -= damage; //then subtract current health by damage
         else 
             damage = 0;
 
-        if (this.currHealth <= 0) { //If the player's current health drops to 0
-            this.currHealth = 0; //Current health never drops below 0
+        if (this.currentHealth <= 0) { //If the player's current health drops to 0
+            this.currentHealth = 0; //Current health never drops below 0
             this.Death ();      //and if the player drops below 0
         }
 
@@ -139,9 +139,9 @@ class Player {
     //heal is the number
     //healer is the player doing the healing
     TakeHeal (heal, healer) {
-        this.currHealth += heal; //add current health by heal
+        this.currentHealth += heal; //add current health by heal
 
-        if (this.currHealth > this.maxHealth) //If the player's health reaches its max
+        if (this.currentHealth > this.maxHealth) //If the player's health reaches its max
             this.currentHealth = this.maxHealth; //then cap it at the MaxHealth
 
         return heal; //Return the heal value incase it changes... somehow...
@@ -231,7 +231,7 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].primaryAttack = data.primary,
         PLAYER_LIST [socket.id].secondaryAttack = data.secondary;
     });
-    socket.on ('playerInitializationData', function (data) {
+    socket.on ('playerInitializationData', function (data) { //This is to recieve the misc. data of the players that doesn't fit anywhere above (I assume)
         PLAYER_LIST [socket.id].name = data.name;
     });
 
@@ -275,7 +275,9 @@ setInterval (function () {
             x: player.x_position,
             y: player.y_position,
             name: player.name,
-            team: player.team
+            team: player.team,
+            maxHealth: player.maxHealth,
+            currentHealth: player.currentHealth,
         });
         
     }

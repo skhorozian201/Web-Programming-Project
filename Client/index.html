@@ -38,8 +38,13 @@
 			ctx.clearRect (0,0,960,540);
 			for (var i = 0; i < data.length; i++)
 			{
-				ctx.fillText ( data[i].name, data[i].x - 60, data[i].y - 80);
-				ctx.drawImage ( playerImage, data[i].x - 80, data[i].y - 80, 160, 160);
+				ctx.fillStyle = "#000000" ;
+				ctx.fillText ( data[i].name, data[i].x + 20, data[i].y);
+				ctx.fillStyle = "#FF0000" ;
+				ctx.fillRect ( data[i].x - 80 , data[i].y + 160 , data[i].maxHealth, 5 ); //place-holder values 300 and 250 used since idk how to send current health and max health
+				ctx.fillStyle = "#00FF00" ;
+				ctx.fillRect ( data[i].x - 80, data[i].y + 160 , data[i].currHealth - 50, 5 ); //current health -50 because there is no way to lose hp right now in the game
+				ctx.drawImage ( playerImage, data[i].x, data[i].y, 160, 160);
 			}
 		});
 
@@ -50,6 +55,7 @@
 				ctx.fillText ("L", data[i].x, data[i].y, data[i].rad);
 			}
 		});
+		//I suggest we sit down and fine tune pixel values for the player, health bar, and name
 
 
 		var moveDirs = [false, false, false, false]; //Movement input directions
