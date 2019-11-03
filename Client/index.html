@@ -143,11 +143,22 @@
 					break ;
 			}	
 		}
+		function mousePosition(event){
+			var positionX = event.clientX;
+			var positionY = event.clientY;
+			var positionOfMouse = "x: " + positionX + "y: " + positionY;
+		}
+		function sendMousePositon () { //This function sends the mouse position data to the server via socket.
+			 socket.emit("sendMousePosition", {
+                   mousePosition
+			 });
+		}
 
 		document.onkeydown = movePress;
 		document.onkeyup = moveLift;
 		document.onmouseup = clickLifted;
 		document.onmousedown = attackDown;
+		document.onmousemove = mousePosition;
 
 	</script>
 

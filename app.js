@@ -101,6 +101,9 @@ class Player {
         this.isImmune = false; //This is when the player is immune to damage
         this.isUntargetable = false; //This is when the cannot be interacted with
 
+        this.mousepositionX = false; //This is the y - coordinate for the current mouse positon.
+        this.mousepositionY = false; //This is the x - coordinate for the current mouse positon.
+
     }
 
     PrimaryAttackFunc () {
@@ -234,6 +237,9 @@ io.sockets.on ('connection', function (socket){
     });
     socket.on ('playerInitializationData', function (data) { //This is to recieve the misc. data of the players that doesn't fit anywhere above (I assume)
         PLAYER_LIST [socket.id].name = data.name;
+    });
+    socket.on('sendMousePosition', function (data) { //This is to recieve the data of the player's mouse positon.
+        PLAYER_LIST [socket.id].mousePosition = data.mousePosition
     });
 
 
