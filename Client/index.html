@@ -38,8 +38,16 @@
 			ctx.clearRect (0,0,960,540);
 			for (var i = 0; i < data.length; i++)
 			{
-				ctx.fillText ( data[i].name, data[i].x + 20, data[i].y);
-				ctx.drawImage ( playerImage, data[i].x, data[i].y, 160, 160);
+				ctx.fillText ( data[i].name, data[i].x - 60, data[i].y - 80);
+				ctx.drawImage ( playerImage, data[i].x - 80, data[i].y - 80, 160, 160);
+			}
+		});
+
+		socket.on ('newProjectileData',function (data) //This receives the data on the projectiles and renders them
+		{
+			for (var i = 0; i < data.length; i++)
+			{
+				ctx.fillText ("L", data[i].x, data[i].y, data[i].rad);
 			}
 		});
 

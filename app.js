@@ -12,13 +12,13 @@ console.log ("Server started...");
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
-var PROJECTILE_LIST = {}; //List of projectiles
+var PROJECTILE_LIST = []; //List of projectiles
 
 var io = require ('socket.io') (serv,{});
 
 //Projectiles
-class Porjectile {
-    constructor (x_init, y_init, angle, radius, speed, owner) {
+class Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         this.x_position = x_init; //x position
         this.y_position = y_init; //y position
 
@@ -29,17 +29,21 @@ class Porjectile {
 
         this.owner = owner; //The player that owns this
 
+        this.lifetime = lifetime;
+        this.age = 0;
+
         this.onCollisionEffect; //This function is called on collision with a player. (Player hit)
         this.onExpireEffect; //This function is called on expire. 
 
     }
 
-    OnCollision (hit) {
-        console.log (hit);
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        console.log (hit.name);
+        this.DestroyThis (i);
     }
 
-    DestoryThis (i) {
-        delete PROJECTILE_LIST [i];
+    DestroyThis (i) { //This destroys the projectile.
+        PROJECTILE_LIST.splice (i, 1);
     }
 }
 
@@ -99,11 +103,15 @@ class Player {
     }
 
     PrimaryAttackFunc () {
-        console.log (this.name + " attack");
+        console.log (this.name + " has attacked.");
     }
 
     SecondaryAttackFunc () {
-        console.log (this.name + " attack");        
+        console.log (this.name + " has attacked.");
+
+        var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 10, this, 50);
+
+        PROJECTILE_LIST.push (attackProjectile);
     }
 
     //Called to deal damage to this player
@@ -210,7 +218,7 @@ io.sockets.on ('connection', function (socket){
         } 
         delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
         delete PLAYER_LIST[socket.id];
-        console.log ('socket disconnet');
+        console.log ('socket disconnect');
     });
 
     socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client
@@ -235,7 +243,7 @@ io.sockets.on ('connection', function (socket){
 //It is called 24 times a second
 setInterval (function () {
     var playerDataPack = []; //The list of all player's position as a packet.
-    var projectileDataPack = [];
+    var projectileDataPack = []; //The list of all projectile data as a packet.
 
     //This is called for every instance of player
     //Use it as gameplay update function for each player
@@ -275,15 +283,33 @@ setInterval (function () {
     for (var i in PROJECTILE_LIST) {
         var projectile = PROJECTILE_LIST [i];
 
-        projectile.x_position += projectile.speed * Math.cos (projectile.angle);
-        projectile.y_position += iprojectilespeed * Math.sin (projectile.angle);
+        //Projectile movement.
+        projectile.x_position += projectile.x_velocity;
+        projectile.y_position += projectile.y_velocity;
 
+        //This checks for collision every frame with every player.
         for (var i in PLAYER_LIST) {
             var player = PLAYER_LIST [i];
 
-            if (GetDistance(player.x_position+80 ,player.y_position+80, projectile.x_position, projectile.y_position) <= projectile.radius + player.radius) {
-                projectile.onCollisionEffect ();
+            if (player != projectile.owner) {
+                if (GetDistance(player.x_position ,player.y_position, projectile.x_position, projectile.y_position) <= projectile.radius + player.radius) {
+                    projectile.OnCollision (player, i);
+                }
             }
+        }
+
+        //Projectile data to be sent to the client
+        projectileDataPack.push ({
+            x: projectile.x_position,
+            y: projectile.y_position,
+            rad: projectile.radius
+        });
+
+
+        if (projectile.age > projectile.lifetime) {
+            projectile.DestroyThis (i);
+        } else {
+            projectile.age++;
         }
     }
 
@@ -292,6 +318,7 @@ setInterval (function () {
     for (var i in SOCKET_LIST) {
         var socket = SOCKET_LIST [i]; 
         socket.emit ('newPlayerData', playerDataPack); //Sending position data to all connections about every player's position
+        socket.emit ('newProjectileData', projectileDataPack);
     }
 
     
