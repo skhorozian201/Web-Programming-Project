@@ -12,24 +12,38 @@ console.log ("Server started...");
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
-var PROJECTILE_LIST = {}; //List of projectiles
+var PROJECTILE_LIST = []; //List of projectiles
 
 var io = require ('socket.io') (serv,{});
 
 //Projectiles
-class Porjectile {
-    constructor (x_init, y_init, angle, speed, owner) {
+class Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         this.x_position = x_init; //x position
         this.y_position = y_init; //y position
 
         this.x_velocity = (Math.cos(angle)) * speed; //x velocity
         this.y_velocity = (Math.sin(angle)) * speed; //y velocity
 
+        this.radius = radius; //the radius of the projectile
+
         this.owner = owner; //The player that owns this
+
+        this.lifetime = lifetime;
+        this.age = 0;
 
         this.onCollisionEffect; //This function is called on collision with a player. (Player hit)
         this.onExpireEffect; //This function is called on expire. 
 
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        console.log (hit.name);
+        this.DestroyThis (i);
+    }
+
+    DestroyThis (i) { //This destroys the projectile.
+        PROJECTILE_LIST.splice (i, 1);
     }
 }
 
@@ -42,16 +56,15 @@ class Player {
         this.name = name; //Player Name
         this.team = team; //Player team
 
-        if ( this.team == 1 ){
-            this.x_position = 200; //Player position on the x-axis
-            this.y_position = 200; //Player position on the y-axis
+        if ( this.team == 2 ){
+            this.x_position = 50; //Player position on the x-axis
+            this.y_position = 50; //Player position on the y-axis
         } else {
-            this.x_position = 600; //Player position on the x-axis
-            this.y_position = 600; //Player position on the y-axis
+            this.x_position = 780; //Player position on the x-axis
+            this.y_position = 320; //Player position on the y-axis
         }
 
-        this.x_hitbox = 160; //Player hitbox
-        this.y_hitbox = 160; //Player hitbox
+        this.radius = 160;
 
         this.maxHealth = 300; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
@@ -90,11 +103,15 @@ class Player {
     }
 
     PrimaryAttackFunc () {
-        
+        console.log (this.name + " has attacked.");
     }
 
     SecondaryAttackFunc () {
-        
+        console.log (this.name + " has attacked.");
+
+        var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 10, this, 50);
+
+        PROJECTILE_LIST.push (attackProjectile);
     }
 
     //Called to deal damage to this player
@@ -155,18 +172,36 @@ class Player {
 
 }
 
+//Use this function to get distance between two points
+function GetDistance (x1, y1, x2, y2) {
+    var final_x = x2-x1; 
+    var final_y = y2-y1;
+
+    return Math.sqrt (Math.pow(final_x,2) + Math.pow(final_y,2)); //Uses pythagorean theorem to find distance
+}
+
+var team1 = 0;//Number of players in team 1.
+var team2 = 0;//Number of players in team 2.
 //Please read Socket.io documentation as even I dont understand this
 io.sockets.on ('connection', function (socket){
     socket.id = Math.random (); //creates a random ID for the new connection
     SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
-    var current_team ;//Created a var for current team . it will have 2 values.
-
-    //If length is even it will assign to team 2 else if its odd then it will be assigned team1. 
-    if(SOCKET_LIST.length % 2 ==0){ 
-        current_team = 2;
-    } else { 
-        current_team=1;
+    var current_team = 1 ;//Created a var for current team . it will have 2 values.
+    //When we have a new connection. To decide the team we check which team has less players. and add that player to that team.
+    if (team1 == team2){//if they are equal add that player to team 1.
+        current_team = 1;
+        team1 ++;
+        
     } 
+    else if (team1 > team2){//If players in team 1 are more than the players in team 2 . add the new player to team 2.
+        current_team = 2;
+        team2 ++;
+    } 
+    else if (team1 < team2){//If players in team 2 are more than the players in team 1 . add the new player to team 1.
+        current_team = 1;
+        team1 ++; 
+    }
+    
 
     var player = new Player (socket.id,"Player", current_team); //constructs a new Player instance
     PLAYER_LIST [socket.id] = player; //adds the new player to the list
@@ -174,9 +209,16 @@ io.sockets.on ('connection', function (socket){
     console.log ('socket connection');
     
     socket.on ('disconnect',function(){ //When a player disconnects from the game
+        //Just to balance the teams , so next spawn is on the team with less players.
+        if (player.team == 1){//If the player is from team 2 , minus 1 from team2
+            team1 --;
+        }
+        else if (player.team == 2){//If player is from team1 minus 1 from team 1
+            team2 --;
+        } 
         delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
         delete PLAYER_LIST[socket.id];
-        console.log ('socket disconnet');
+        console.log ('socket disconnect');
     });
 
     socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client
@@ -201,6 +243,7 @@ io.sockets.on ('connection', function (socket){
 //It is called 24 times a second
 setInterval (function () {
     var playerDataPack = []; //The list of all player's position as a packet.
+    var projectileDataPack = []; //The list of all projectile data as a packet.
 
     //This is called for every instance of player
     //Use it as gameplay update function for each player
@@ -239,11 +282,45 @@ setInterval (function () {
         
     }
 
+    for (var i in PROJECTILE_LIST) {
+        var projectile = PROJECTILE_LIST [i];
+
+        //Projectile movement.
+        projectile.x_position += projectile.x_velocity;
+        projectile.y_position += projectile.y_velocity;
+
+        //This checks for collision every frame with every player.
+        for (var i in PLAYER_LIST) {
+            var player = PLAYER_LIST [i];
+
+            if (player != projectile.owner) {
+                if (GetDistance(player.x_position ,player.y_position, projectile.x_position, projectile.y_position) <= projectile.radius + player.radius) {
+                    projectile.OnCollision (player, i);
+                }
+            }
+        }
+
+        //Projectile data to be sent to the client
+        projectileDataPack.push ({
+            x: projectile.x_position,
+            y: projectile.y_position,
+            rad: projectile.radius
+        });
+
+
+        if (projectile.age > projectile.lifetime) {
+            projectile.DestroyThis (i);
+        } else {
+            projectile.age++;
+        }
+    }
+
     //This is called for every socket (connection)
     //This sends data to the client
     for (var i in SOCKET_LIST) {
         var socket = SOCKET_LIST [i]; 
         socket.emit ('newPlayerData', playerDataPack); //Sending position data to all connections about every player's position
+        socket.emit ('newProjectileData', projectileDataPack);
     }
 
     
