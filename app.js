@@ -191,8 +191,6 @@ io.sockets.on ('connection', function (socket){
     });
     socket.on ('playerInitializationData', function (data) { //This is to recieve the misc. data of the players that doesn't fit anywhere above (I assume)
         PLAYER_LIST [socket.id].name = data.name;
-        PLAYER_LIST [socket.id].maxHealth = data.maxHealth;
-        PLAYER_LIST [socket.id].currentHealth = data.currentHealth;
     });
 
 
