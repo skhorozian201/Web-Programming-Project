@@ -39,12 +39,12 @@
 			for (var i = 0; i < data.length; i++)
 			{
 				ctx.fillStyle = "#000000" ;
-				ctx.fillText ( data[i].name, data[i].x + 20, data[i].y);
+				ctx.fillText ( data[i].name, data[i].x - 80, data[i].y - 100);
 				ctx.fillStyle = "#FF0000" ;
-				ctx.fillRect ( data[i].x - 80 , data[i].y + 160 , data[i].maxHealth, 5 ); //place-holder values 300 and 250 used since idk how to send current health and max health
+				ctx.fillRect ( data[i].x - 80, data[i].y - 90, 100, 5 ); //place-holder values 300 and 250 used since idk how to send current health and max health
 				ctx.fillStyle = "#00FF00" ;
-				ctx.fillRect ( data[i].x - 80, data[i].y + 160 , data[i].currHealth - 50, 5 ); //current health -50 because there is no way to lose hp right now in the game
-				ctx.drawImage ( playerImage, data[i].x, data[i].y, 160, 160);
+				ctx.fillRect ( data[i].x - 80, data[i].y - 90, (data[i].currentHealth/data[i].maxHealth) * 100, 5 ); //current health -50 because there is no way to lose hp right now in the game
+				ctx.drawImage ( playerImage, data[i].x - 80, data[i].y - 80, 160, 160);
 			}
 		});
 

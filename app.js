@@ -39,6 +39,7 @@ class Projectile {
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         console.log (hit.name);
+        hit.TakeDamage (20, this.owner);
         this.DestroyThis (i);
     }
 
@@ -277,7 +278,7 @@ setInterval (function () {
             name: player.name,
             team: player.team,
             maxHealth: player.maxHealth,
-            currentHealth: player.currentHealth,
+            currentHealth: player.currentHealth
         });
         
     }
