@@ -4,9 +4,13 @@
 		<title>
 			Game
 		</title>
+		<a>
+			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px; display: none;" ></img>
+		</a>
+		
 	</head>
 
-	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000"></canvas>
+	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000" ></canvas>
 
 	<script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
@@ -14,14 +18,45 @@
 		var socket = io ();
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
+		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
+		var current_name = prompt("Please enter your name", "Player");//Creates a prompt and stores the values in current_username.
+		
+		while (current_name == null || current_name ==  "") {
+			current_name = prompt("Please enter your name", "Player");
+		}
+
 		ctx.font = "30px Arial";
 
-		socket.on ('newPosition',function (data) { //This receives the data on the players movement and renders each and single player 
+		document.addEventListener('contextmenu', event => event.preventDefault());
+
+		socket.emit ('playerInitializationData', {
+				name: current_name
+		}); 
+
+		socket.on ('newPlayerData',function (data) //This receives the data on the players movement and renders each and single player
+		{
 			ctx.clearRect (0,0,960,540);
-			
 			for (var i = 0; i < data.length; i++)
-				ctx.fillText ("P",data[i].x, data[i].y);
+			{
+				ctx.fillStyle = "#000000" ;
+				ctx.fillText ( data[i].name, data[i].x - 80, data[i].y - 100);
+				ctx.fillStyle = "#FF0000" ;
+				ctx.fillRect ( data[i].x - 80, data[i].y - 90, 100, 5 ); 
+				ctx.fillStyle = "#00FF00" ;
+				ctx.fillRect ( data[i].x - 80, data[i].y - 90, (data[i].currentHealth/data[i].maxHealth) * 100, 5 );
+				ctx.fillStyle = "#000000" ;
+				ctx.drawImage ( playerImage, data[i].x - 80, data[i].y - 80, 160, 160);
+			}
 		});
+
+		socket.on ('newProjectileData',function (data) //This receives the data on the projectiles and renders them
+		{
+			for (var i = 0; i < data.length; i++)
+			{
+				ctx.fillText ("L", data[i].x, data[i].y, data[i].rad);
+			}
+		});
+		//I suggest we sit down and fine tune pixel values for the player, health bar, and name
 
 
 		var moveDirs = [false, false, false, false]; //Movement input directions
@@ -78,28 +113,27 @@
 		var attackClick = [false, false];
 		function sendAttackInput () { //This sends the attack (based on click) data to the server via socket.
 			socket.emit ('sendAttackInput', {
-				attackTypeClick: attackClick
+				primary: attackClick [0], 
+				secondary: attackClick [1]
 			});
 		}
 
-
-		function attackClick(event) {
+		function attackDown(event) {
 			switch (event.button){
-				case 0 :   // 0 is the number for left click, which is the primary attack.
-					attackClick[0] = true; //this triggers the primary attack.
+				case 0:   // 0 is the number for left click, which is the primary attack.
+					attackClick[0] = true; //this disables the primary attack when click is lifted.
 					sendAttackInput();
 					break;
 				case 2:    //2 is the number for right click, which is the secondary attack.
-					attackClick[1] = true; // this triggers the secondary attack.
-					sendAttackInput() ;
-					break ;
+					attackClick[1] = true; //
+					sendAttackInput(); //this disables the secondary attack when click is lifted.
+					break;
 			}	
 		}
 
-      
 		function clickLifted(event) {
 			switch (event.button){
-				case 0 :   // 0 is the number for left click, which is the primary attack.
+				case 0:   // 0 is the number for left click, which is the primary attack.
 					attackClick[0] = false; //this disables the primary attack when click is lifted.
 					sendAttackInput();
 					break;
@@ -110,23 +144,11 @@
 			}	
 		}
 
-		function mousePosition(event){
-			var positionX = event.clientX;
-			var positionY = event.clientY;
-			var positionOfMouse = "x: " + positionX + "y: " + positionY;
-		}
-
-		function sendMousePositon () { //This function sends the mouse position data to the server via socket.
-			 socket.emit("sendMousePosition", {
-                   mousePosition
-			 });
-		}
-
-        
-        
 		document.onkeydown = movePress;
 		document.onkeyup = moveLift;
-		document.onmousemove = mousePosition;
+		document.onmouseup = clickLifted;
+		document.onmousedown = attackDown;
+
 	</script>
 
 </html>
