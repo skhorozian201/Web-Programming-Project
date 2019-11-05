@@ -238,7 +238,8 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].name = data.name;
     });
     socket.on('sendMousePosition', function (data) { //This is to recieve the data of the player's mouse positon.
-        PLAYER_LIST [socket.id].mousePosition = data.mousePosition
+        PLAYER_LIST [socket.id].mousePositionX = data.x;
+        PLAYER_LIST [socket.id].mousePositionY = data.y;
     });
 
 
