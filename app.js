@@ -38,8 +38,10 @@ class Projectile {
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
-        console.log (hit.name);
-        hit.TakeDamage (20, this.owner);
+        if (hit.team != this.owner.team)
+            this.owner.DealDamage (20, hit);
+        else 
+            this.owner.SendHeal (10, hit);
         this.DestroyThis (i);
     }
 
@@ -65,7 +67,7 @@ class Player {
             this.y_position = 320; //Player position on the y-axis
         }
 
-        this.radius = 160;
+        this.radius = 60;
 
         this.maxHealth = 300; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
@@ -79,6 +81,8 @@ class Player {
 
         this.primaryAttack = false; //Is the player pressing Left Mouse
         this.secondaryAttack = false; //Is the player pressing Right Mouse
+
+        this.actionTimer = 0;
 
         //List of Functions:
 
@@ -104,15 +108,23 @@ class Player {
     }
 
     PrimaryAttackFunc () {
-        console.log (this.name + " has attacked.");
+        if (this.actionTimer <= 0) {
+            this.actionTimer = 15;
+
+            var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 0, this, 15);
+
+            PROJECTILE_LIST.push (attackProjectile);
+        }
     }
 
     SecondaryAttackFunc () {
-        console.log (this.name + " has attacked.");
+        if (this.actionTimer <= 0) {
+            this.actionTimer = 15;
 
-        var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 10, this, 50);
+            var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 20, this, 25);
 
-        PROJECTILE_LIST.push (attackProjectile);
+            PROJECTILE_LIST.push (attackProjectile);
+        }
     }
 
     //Called to deal damage to this player
@@ -130,6 +142,8 @@ class Player {
             this.Death ();      //and if the player drops below 0
         }
 
+        console.log (this.name + " took" + damage + " damage.")
+
         return damage; //Return the damage incase it changes... somehow...
     }
 
@@ -142,7 +156,7 @@ class Player {
     TakeHeal (heal, healer) {
         this.currentHealth += heal; //add current health by heal
 
-        if (this.currentHealth > this.maxHealth) //If the player's health reaches its max
+        if (this.currentHealth >= this.maxHealth) //If the player's health reaches its max
             this.currentHealth = this.maxHealth; //then cap it at the MaxHealth
 
         return heal; //Return the heal value incase it changes... somehow...
@@ -160,7 +174,7 @@ class Player {
     //heal is the number
     //receiver is the player receiving the heal
     SendHeal (heal, receiver) {
-        receiver.TakeDamage (heal, this)
+        receiver.TakeHeal (heal, this);
     }
 
 
@@ -169,6 +183,7 @@ class Player {
         this.isImmune = true;
         this.isDead = true;
         this.isUntargetable = true;
+        console.log (this.name + "died.")
     }
 
 }
@@ -183,7 +198,7 @@ function GetDistance (x1, y1, x2, y2) {
 
 var team1 = 0;//Number of players in team 1.
 var team2 = 0;//Number of players in team 2.
-//Please read Socket.io documentation as even I dont understand this
+
 io.sockets.on ('connection', function (socket){
     socket.id = Math.random (); //creates a random ID for the new connection
     SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
@@ -206,6 +221,10 @@ io.sockets.on ('connection', function (socket){
 
     var player = new Player (socket.id,"Player", current_team); //constructs a new Player instance
     PLAYER_LIST [socket.id] = player; //adds the new player to the list
+
+    socket.emit ('sendPlayerID', {
+        id: socket.id
+    });
 
     console.log ('socket connection');
     
@@ -235,7 +254,9 @@ io.sockets.on ('connection', function (socket){
     socket.on ('playerInitializationData', function (data) { //This is to recieve the misc. data of the players that doesn't fit anywhere above (I assume)
         PLAYER_LIST [socket.id].name = data.name;
     });
-
+    socket.on ('sendSpellInput', function (data) { //This is to receive the player spell cast input.
+        console.log ("Player used their " + data.spellNumber + " spell.")
+    });
 
 }); 
 
@@ -251,24 +272,32 @@ setInterval (function () {
     for (var i in PLAYER_LIST) {
         var player = PLAYER_LIST [i];
 
-        //This move the player based on the input
-        if (player.moveUpInput) {
-            player.x_position += player.moveSpeed;
-        } else if (player.moveDownInput) {
-            player.x_position -= player.moveSpeed;            
-        }
+        if (!player.isDead && player.actionTimer <= 0) {
+            //This move the player based on the input
+            if (player.moveUpInput) {
+                player.x_position += player.moveSpeed;
+            } else if (player.moveDownInput) {
+                player.x_position -= player.moveSpeed;            
+            }
 
-        if (player.moveRightInput) {
-            player.y_position += player.moveSpeed;
-        } else if (player.moveLeftInput) {
-            player.y_position -= player.moveSpeed;            
-        }
+            if (player.moveRightInput) {
+                player.y_position += player.moveSpeed;
+            } else if (player.moveLeftInput) {
+                player.y_position -= player.moveSpeed;            
+            }
+        
 
-        if (player.primaryAttack) {
-            player.PrimaryAttackFunc ();
+            if (player.primaryAttack) {
+                player.PrimaryAttackFunc ();
+            }
+            if (player.secondaryAttack) {
+                player.SecondaryAttackFunc ();
+            }
+
         }
-        if (player.secondaryAttack) {
-            player.SecondaryAttackFunc ();
+        
+        if (player.actionTimer > 0) {
+            player.actionTimer--;
         }
 
         //This adds the new position data to the list
@@ -278,7 +307,8 @@ setInterval (function () {
             name: player.name,
             team: player.team,
             maxHealth: player.maxHealth,
-            currentHealth: player.currentHealth
+            currentHealth: player.currentHealth,
+            id: player.id
         });
         
     }
@@ -316,12 +346,13 @@ setInterval (function () {
         }
     }
 
+    var dataPackage = {playerDataPack, projectileDataPack};
+
     //This is called for every socket (connection)
     //This sends data to the client
     for (var i in SOCKET_LIST) {
-        var socket = SOCKET_LIST [i]; 
-        socket.emit ('newPlayerData', playerDataPack); //Sending position data to all connections about every player's position
-        socket.emit ('newProjectileData', projectileDataPack);
+        var socket = SOCKET_LIST [i];
+        socket.emit ('sendPositionData', dataPackage); //Sending position data to all connections about every player's position
     }
 
     

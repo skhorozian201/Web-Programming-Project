@@ -6,6 +6,7 @@
 		</title>
 		<a>
 			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "hammerImageAnchor" src = "img/Hammer.png" style = "width:10px; height:10px; display: none;" ></img>
 		</a>
 		
 	</head>
@@ -21,6 +22,8 @@
 		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
 		var current_name = prompt("Please enter your name", "Player");//Creates a prompt and stores the values in current_username.
 		
+		var hammerImage = document.getElementById ("hammerImageAnchor");
+
 		while (current_name == null || current_name ==  "") {
 			current_name = prompt("Please enter your name", "Player");
 		}
@@ -30,34 +33,49 @@
 		document.addEventListener('contextmenu', event => event.preventDefault());
 
 		socket.emit ('playerInitializationData', {
-				name: current_name
+			name: current_name
 		}); 
 
-		socket.on ('newPlayerData',function (data) //This receives the data on the players movement and renders each and single player
+		var PlayerID;
+
+		socket.on ('sendPlayerID', function (data) {
+			PlayerID = data.id;
+			console.log (PlayerID);
+		});
+
+		socket.on ('sendPositionData',function (data) //This receives the data on the players movement and renders each and single player
 		{
 			ctx.clearRect (0,0,960,540);
-			for (var i = 0; i < data.length; i++)
+			ctx.save ();
+
+			for (var i = 0; i < data.playerDataPack.length; i++)
 			{
-				ctx.fillStyle = "#000000" ;
-				ctx.fillText ( data[i].name, data[i].x - 80, data[i].y - 100);
+				var player = data.playerDataPack [i];
+
+				if (player.team == 1)
+					ctx.fillStyle = "#0000A0";
+				else 
+					ctx.fillStyle = "#A00000";
+				ctx.fillText ( player.name, player.x - 80, player.y - 100);
 				ctx.fillStyle = "#FF0000" ;
-				ctx.fillRect ( data[i].x - 80, data[i].y - 90, 100, 5 ); 
+				ctx.fillRect ( player.x - 80, player.y - 90, 100, 5 ); 
 				ctx.fillStyle = "#00FF00" ;
-				ctx.fillRect ( data[i].x - 80, data[i].y - 90, (data[i].currentHealth/data[i].maxHealth) * 100, 5 );
-				ctx.fillStyle = "#000000" ;
-				ctx.drawImage ( playerImage, data[i].x - 80, data[i].y - 80, 160, 160);
-			}
-		});
+				ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
 
-		socket.on ('newProjectileData',function (data) //This receives the data on the projectiles and renders them
-		{
-			for (var i = 0; i < data.length; i++)
+				ctx.drawImage ( playerImage, player.x - 80, player.y - 80, 160, 160);
+
+				//if (player.id == PlayerID)
+					//ctx.translate (player.x + (ctx.width / 2), player.y + (ctx.height / 2));
+			}
+
+			for (var i = 0; i < data.projectileDataPack.length; i++)
 			{
-				ctx.fillText ("L", data[i].x, data[i].y, data[i].rad);
+				var projectile = data.projectileDataPack [i];
+				ctx.drawImage (hammerImage, projectile.x - 20, projectile.y - 20, 40, 40);
 			}
-		});
-		//I suggest we sit down and fine tune pixel values for the player, health bar, and name
 
+			ctx.restore ();
+		});
 
 		var moveDirs = [false, false, false, false]; //Movement input directions
 
@@ -66,9 +84,15 @@
 				moveDirections: moveDirs
 			});
 		}
+
+		function sendSpellInput (spellNumber) {
+			socket.emit ('sendSpellInput', {
+				spellNumber: spellNumber
+			});
+		}
          
 		//This is just input
-		function movePress (e) {
+		function keyPress (e) {
 			switch (e.keyCode) {
 				case 87:
 					moveDirs [3] = true;
@@ -87,9 +111,18 @@
 					sendMoveInput ();
 					break;	
 			}
+
+			if (e.keyCode == 81) {
+				sendSpellInput (0);
+			} else if (e.keyCode == 69) {
+				sendSpellInput (1);
+			} else if (e.keyCode == 82) {
+				sendSpellInput (2);
+			}
+
 		}
 
-		function moveLift (e) {
+		function keyLift (e) {
 			switch (e.keyCode) {
 				case 87:
 					moveDirs [3] = false;
@@ -141,11 +174,11 @@
 					attackClick[1] = false; //
 					sendAttackInput(); //this disables the secondary attack when click is lifted.
 					break ;
-			}	
+			}
 		}
 
-		document.onkeydown = movePress;
-		document.onkeyup = moveLift;
+		document.onkeydown = keyPress;
+		document.onkeyup = keyLift;
 		document.onmouseup = clickLifted;
 		document.onmousedown = attackDown;
 
