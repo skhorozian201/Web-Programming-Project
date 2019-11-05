@@ -81,6 +81,9 @@ class Player {
 
         this.primaryAttack = false; //Is the player pressing Left Mouse
         this.secondaryAttack = false; //Is the player pressing Right Mouse
+        
+        this.mousepositionX = 0; //This is the y - coordinate for the current mouse positon.
+        this.mousepositionY = 0; //This is the x - coordinate for the current mouse positon.
 
         this.actionTimer = 0;
 
@@ -104,7 +107,6 @@ class Player {
         this.isDead = false; //This is death...
         this.isImmune = false; //This is when the player is immune to damage
         this.isUntargetable = false; //This is when the cannot be interacted with
-
     }
 
     PrimaryAttackFunc () {
@@ -254,10 +256,13 @@ io.sockets.on ('connection', function (socket){
     socket.on ('playerInitializationData', function (data) { //This is to recieve the misc. data of the players that doesn't fit anywhere above (I assume)
         PLAYER_LIST [socket.id].name = data.name;
     });
+    socket.on('sendMousePosition', function (data) { //This is to recieve the data of the player's mouse positon.
+        PLAYER_LIST [socket.id].mousePositionX = data.x;
+        PLAYER_LIST [socket.id].mousePositionY = data.y;
+    });
     socket.on ('sendSpellInput', function (data) { //This is to receive the player spell cast input.
         console.log ("Player used their " + data.spellNumber + " spell.")
     });
-
 }); 
 
 //This is the server's update function

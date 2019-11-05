@@ -176,11 +176,20 @@
 					break ;
 			}
 		}
+		function mousePosition(event){
+			var positionX = event.clientX;
+			var positionY = event.clientY;
+			socket.emit("sendMousePosition", {
+                   		x: positionsX,
+				y: positionsY
+			 });
+		}
 
 		document.onkeydown = keyPress;
 		document.onkeyup = keyLift;
 		document.onmouseup = clickLifted;
 		document.onmousedown = attackDown;
+		document.onmousemove = mousePosition;
 
 	</script>
 
