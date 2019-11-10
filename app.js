@@ -38,16 +38,27 @@ class Projectile {
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
-        if (hit.team != this.owner.team)
+        if (hit.team != this.owner.team){
             this.owner.DealDamage (20, hit);
-        else 
-            this.owner.SendHeal (10, hit);
-        this.DestroyThis (i);
+            this.DestroyThis (i);
+        }
     }
 
     DestroyThis (i) { //This destroys the projectile.
         PROJECTILE_LIST.splice (i, 1);
     }
+}
+
+class Spell { //Spell abstract class
+    constructor () {
+        this.spellCooldown = 1;
+    }
+     //spell cooldown
+
+    SpellCast () { //function called when the spell is used.
+    
+    }
+
 }
 
 //Player Class
@@ -82,8 +93,8 @@ class Player {
         this.primaryAttack = false; //Is the player pressing Left Mouse
         this.secondaryAttack = false; //Is the player pressing Right Mouse
         
-        this.mousepositionX = 0; //This is the y - coordinate for the current mouse positon.
-        this.mousepositionY = 0; //This is the x - coordinate for the current mouse positon.
+        this.mousePositionX = 0; //This is the y - coordinate for the current mouse positon.
+        this.mousePositionY = 0; //This is the x - coordinate for the current mouse positon.
 
         this.actionTimer = 0;
 
@@ -110,7 +121,7 @@ class Player {
     }
 
     PrimaryAttackFunc () {
-        if (this.actionTimer <= 0) {
+        if (this.actionTimer <= 0) { //temporary attack function
             this.actionTimer = 15;
 
             var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 0, this, 15);
@@ -120,12 +131,23 @@ class Player {
     }
 
     SecondaryAttackFunc () {
-        if (this.actionTimer <= 0) {
+        if (this.actionTimer <= 0) { //temporary attack function
             this.actionTimer = 15;
 
-            var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 20, this, 25);
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+            var attackProjectile = new Projectile (this.x_position, this.y_position, angle, 40, 30, this, 12);
 
             PROJECTILE_LIST.push (attackProjectile);
+        }
+    }
+
+    CastSpell (spellNumb) {
+        if (spellNumb == 0) {
+
+        } else if (spellNumb == 1) {
+
+        } else if (spellNumb == 2) {
+
         }
     }
 
@@ -143,8 +165,6 @@ class Player {
             this.currentHealth = 0; //Current health never drops below 0
             this.Death ();      //and if the player drops below 0
         }
-
-        console.log (this.name + " took" + damage + " damage.")
 
         return damage; //Return the damage incase it changes... somehow...
     }
@@ -261,7 +281,7 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].mousePositionY = data.y;
     });
     socket.on ('sendSpellInput', function (data) { //This is to receive the player spell cast input.
-        console.log ("Player used their " + data.spellNumber + " spell.")
+        PLAYER_LIST [socket.id].CastSpell (data.spellNumber);
     });
 }); 
 

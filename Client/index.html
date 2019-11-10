@@ -179,9 +179,10 @@
 		function mousePosition(event){
 			var positionX = event.clientX;
 			var positionY = event.clientY;
+
 			socket.emit("sendMousePosition", {
-                   		x: positionsX,
-				y: positionsY
+                x: positionX,
+				y: positionY
 			 });
 		}
 
