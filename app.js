@@ -8,7 +8,8 @@ app.get ('/', function (req, res) {
 app.use (express.static('client')); //Allows for access of static files from within the "client" folder
 
 serv.listen (2000); //listens to port :2000
-console.log ("Server started...");
+
+console.log ("Server Initialized");
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
@@ -38,14 +39,27 @@ class Projectile {
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
-        console.log (hit.name);
-        hit.TakeDamage (20, this.owner);
-        this.DestroyThis (i);
+        if (hit.team != this.owner.team){
+            this.owner.DealDamage (20, hit);
+            this.DestroyThis (i);
+        }
     }
 
     DestroyThis (i) { //This destroys the projectile.
         PROJECTILE_LIST.splice (i, 1);
     }
+}
+
+class Spell { //Spell abstract class
+    constructor () {
+        this.spellCooldown = 1;
+    }
+     //spell cooldown
+
+    SpellCast () { //function called when the spell is used.
+    
+    }
+
 }
 
 //Player Class
@@ -65,7 +79,7 @@ class Player {
             this.y_position = 320; //Player position on the y-axis
         }
 
-        this.radius = 160;
+        this.radius = 60;
 
         this.maxHealth = 300; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
@@ -79,6 +93,11 @@ class Player {
 
         this.primaryAttack = false; //Is the player pressing Left Mouse
         this.secondaryAttack = false; //Is the player pressing Right Mouse
+        
+        this.mousePositionX = 0; //This is the y - coordinate for the current mouse positon.
+        this.mousePositionY = 0; //This is the x - coordinate for the current mouse positon.
+
+        this.actionTimer = 0;
 
         //List of Functions:
 
@@ -100,22 +119,37 @@ class Player {
         this.isDead = false; //This is death...
         this.isImmune = false; //This is when the player is immune to damage
         this.isUntargetable = false; //This is when the cannot be interacted with
-
-        this.mousepositionX = 0; //This is the y - coordinate for the current mouse positon.
-        this.mousepositionY = 0; //This is the x - coordinate for the current mouse positon.
-
     }
 
     PrimaryAttackFunc () {
-        console.log (this.name + " has attacked.");
+        if (this.actionTimer <= 0) { //temporary attack function
+            this.actionTimer = 15;
+
+            var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 0, this, 15);
+
+            PROJECTILE_LIST.push (attackProjectile);
+        }
     }
 
     SecondaryAttackFunc () {
-        console.log (this.name + " has attacked.");
+        if (this.actionTimer <= 0) { //temporary attack function
+            this.actionTimer = 15;
 
-        var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 10, this, 50);
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+            var attackProjectile = new Projectile (this.x_position, this.y_position, angle, 40, 30, this, 12);
 
-        PROJECTILE_LIST.push (attackProjectile);
+            PROJECTILE_LIST.push (attackProjectile);
+        }
+    }
+
+    CastSpell (spellNumb) {
+        if (spellNumb == 0) {
+
+        } else if (spellNumb == 1) {
+
+        } else if (spellNumb == 2) {
+
+        }
     }
 
     //Called to deal damage to this player
@@ -145,7 +179,7 @@ class Player {
     TakeHeal (heal, healer) {
         this.currentHealth += heal; //add current health by heal
 
-        if (this.currentHealth > this.maxHealth) //If the player's health reaches its max
+        if (this.currentHealth >= this.maxHealth) //If the player's health reaches its max
             this.currentHealth = this.maxHealth; //then cap it at the MaxHealth
 
         return heal; //Return the heal value incase it changes... somehow...
@@ -163,7 +197,7 @@ class Player {
     //heal is the number
     //receiver is the player receiving the heal
     SendHeal (heal, receiver) {
-        receiver.TakeDamage (heal, this)
+        receiver.TakeHeal (heal, this);
     }
 
 
@@ -172,6 +206,7 @@ class Player {
         this.isImmune = true;
         this.isDead = true;
         this.isUntargetable = true;
+        console.log (this.name + "died.")
     }
 
 }
@@ -186,38 +221,47 @@ function GetDistance (x1, y1, x2, y2) {
 
 var team1 = 0;//Number of players in team 1.
 var team2 = 0;//Number of players in team 2.
-//Please read Socket.io documentation as even I dont understand this
-io.sockets.on ('connection', function (socket){
-    socket.id = Math.random (); //creates a random ID for the new connection
-    SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
-    var current_team = 1 ;//Created a var for current team . it will have 2 values.
-    //When we have a new connection. To decide the team we check which team has less players. and add that player to that team.
-    if (team1 == team2){//if they are equal add that player to team 1.
-        current_team = 1;
-        team1 ++;
-        
-    } 
-    else if (team1 > team2){//If players in team 1 are more than the players in team 2 . add the new player to team 2.
-        current_team = 2;
-        team2 ++;
-    } 
-    else if (team1 < team2){//If players in team 2 are more than the players in team 1 . add the new player to team 1.
-        current_team = 1;
-        team1 ++; 
-    }
-    
 
-    var player = new Player (socket.id,"Player", current_team); //constructs a new Player instance
-    PLAYER_LIST [socket.id] = player; //adds the new player to the list
+io.sockets.on ('connection', function (socket){
 
     console.log ('socket connection');
+
+    socket.on ("login", function (data){
+        socket.id = Math.random (); //creates a random ID for the new connection
+        SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
+        var current_team = 1 ;//Created a var for current team . it will have 2 values.
+        //When we have a new connection. To decide the team we check which team has less players. and add that player to that team.
+        if (team1 == team2){//if they are equal add that player to team 1.
+            current_team = 1;
+            team1 ++;
+            
+        } 
+        else if (team1 > team2){//If players in team 1 are more than the players in team 2 . add the new player to team 2.
+            current_team = 2;
+            team2 ++;
+        } 
+        else if (team1 < team2){//If players in team 2 are more than the players in team 1 . add the new player to team 1.
+            current_team = 1;
+            team1 ++; 
+        }
     
+
+        var player = new Player (socket.id, data.username, current_team); //constructs a new Player instance
+        PLAYER_LIST [socket.id] = player; //adds the new player to the list
+
+        socket.emit ('sendResult', {
+            connected: true,
+            id: socket.id
+        });
+
+    });
+
     socket.on ('disconnect',function(){ //When a player disconnects from the game
         //Just to balance the teams , so next spawn is on the team with less players.
-        if (player.team == 1){//If the player is from team 2 , minus 1 from team2
+        if (PLAYER_LIST[socket.id].team == 1){//If the player is from team 2 , minus 1 from team2
             team1 --;
         }
-        else if (player.team == 2){//If player is from team1 minus 1 from team 1
+        else if (PLAYER_LIST[socket.id].team == 2){//If player is from team1 minus 1 from team 1
             team2 --;
         } 
         delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
@@ -239,10 +283,12 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].name = data.name;
     });
     socket.on('sendMousePosition', function (data) { //This is to recieve the data of the player's mouse positon.
-        PLAYER_LIST [socket.id].mousePosition = data.mousePosition
+        PLAYER_LIST [socket.id].mousePositionX = data.x;
+        PLAYER_LIST [socket.id].mousePositionY = data.y;
     });
-
-
+    socket.on ('sendSpellInput', function (data) { //This is to receive the player spell cast input.
+        PLAYER_LIST [socket.id].CastSpell (data.spellNumber);
+    });
 }); 
 
 //This is the server's update function
@@ -257,24 +303,32 @@ setInterval (function () {
     for (var i in PLAYER_LIST) {
         var player = PLAYER_LIST [i];
 
-        //This move the player based on the input
-        if (player.moveUpInput) {
-            player.x_position += player.moveSpeed;
-        } else if (player.moveDownInput) {
-            player.x_position -= player.moveSpeed;            
-        }
+        if (!player.isDead && player.actionTimer <= 0) {
+            //This move the player based on the input
+            if (player.moveUpInput) {
+                player.x_position += player.moveSpeed;
+            } else if (player.moveDownInput) {
+                player.x_position -= player.moveSpeed;            
+            }
 
-        if (player.moveRightInput) {
-            player.y_position += player.moveSpeed;
-        } else if (player.moveLeftInput) {
-            player.y_position -= player.moveSpeed;            
-        }
+            if (player.moveRightInput) {
+                player.y_position += player.moveSpeed;
+            } else if (player.moveLeftInput) {
+                player.y_position -= player.moveSpeed;            
+            }
+        
 
-        if (player.primaryAttack) {
-            player.PrimaryAttackFunc ();
+            if (player.primaryAttack) {
+                player.PrimaryAttackFunc ();
+            }
+            if (player.secondaryAttack) {
+                player.SecondaryAttackFunc ();
+            }
+
         }
-        if (player.secondaryAttack) {
-            player.SecondaryAttackFunc ();
+        
+        if (player.actionTimer > 0) {
+            player.actionTimer--;
         }
 
         //This adds the new position data to the list
@@ -284,7 +338,8 @@ setInterval (function () {
             name: player.name,
             team: player.team,
             maxHealth: player.maxHealth,
-            currentHealth: player.currentHealth
+            currentHealth: player.currentHealth,
+            id: player.id
         });
         
     }
@@ -322,12 +377,13 @@ setInterval (function () {
         }
     }
 
+    var dataPackage = {playerDataPack, projectileDataPack};
+
     //This is called for every socket (connection)
     //This sends data to the client
     for (var i in SOCKET_LIST) {
-        var socket = SOCKET_LIST [i]; 
-        socket.emit ('newPlayerData', playerDataPack); //Sending position data to all connections about every player's position
-        socket.emit ('newProjectileData', projectileDataPack);
+        var socket = SOCKET_LIST [i];
+        socket.emit ('sendPositionData', dataPackage); //Sending position data to all connections about every player's position
     }
 
     
