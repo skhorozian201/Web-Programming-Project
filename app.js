@@ -40,7 +40,7 @@ class Projectile {
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
-            this.owner.DealDamage (20, hit);
+            this.owner.DealDamage (100, hit);
             this.DestroyThis (i);
         }
     }
@@ -66,10 +66,12 @@ class Spell { //Spell abstract class
 class Player {
    
 
-    constructor (id, name,team) {
+    constructor (id, name,team,lives,kills) {
         this.id = id; //Player ID
         this.name = name; //Player Name
         this.team = team; //Player team
+        this.lives = lives;//Player lives which will be 5
+        this.kills = kills;//PLayer total kills
 
         if ( this.team == 2 ){
             this.x_position = 50; //Player position on the x-axis
@@ -157,15 +159,29 @@ class Player {
     //dealer is the player doing the damage
     TakeDamage (damage, dealer) {
 
-        if (!this.isImmune) //If the player is not immune to damage
+        if (!this.isImmune){ //If the player is not immune to damage
             this.currentHealth -= damage; //then subtract current health by damage
-        else 
-            damage = 0;
-
-        if (this.currentHealth <= 0) { //If the player's current health drops to 0
-            this.currentHealth = 0; //Current health never drops below 0
-            this.Death ();      //and if the player drops below 0
+            if (this.currentHealth <= 0) { //If the player's current health drops to 0
+                this.currentHealth = 0; //Current health never drops below 0
+                dealer.kills ++; //Give the dealer a kill
+                if (dealer.team == 1){//If the dealer is from team 1 , give them a point
+                    team1Score ++;
+                }
+                else if (dealer.team == 2){//If dealer is from team2 , give them a point
+                    team2Score ++ ;
+                }
+                console.log(team2Score);
+                // if (team2Score > 2){
+                //    code for closing the server.
+                // }
+                this.Death ();//Call death function on current player
+                this.Respawn();//Call respawn method.
+               
+            }
         }
+        else {
+            damage = 0;}
+
 
         return damage; //Return the damage incase it changes... somehow...
     }
@@ -203,10 +219,31 @@ class Player {
 
     //Called when the player drops to 0 current health
     Death () {
-        this.isImmune = true;
-        this.isDead = true;
-        this.isUntargetable = true;
-        console.log (this.name + "died.")
+        this.isImmune = true;//Kepp them immune for 5 seconds
+        this.isDead = true;//Keep them //dead for 5 seconds
+        this.lives --;//Life minus 1.
+        this.isUntargetable = true;//Cant hit them
+        console.log (this.name + " died.");       
+        
+    }
+
+    Respawn(){//Respawn them
+        if (this.lives >0){ //If he has a life then respawn them but with a 5 sec delay       
+            setTimeout(function (x) {//Gives a 5 sec delay before executing the function.
+                //Just a trick as i could not acess the current player from inside this method i passed that player(this) as parameter to this mehtod. 
+                PLAYER_LIST[x.id] = new Player (x.id, x.name, x.team,x.lives,x.kills);  
+            }, 5000,this);
+        }
+        else {//If no more lives left 
+            this.Death();//Freeze the player for ever.
+            if (this.team == 1){//If the player is from team 2 , minus 1 from team2
+                team1 --;
+            }
+            else if (this.team == 2){//If player is from team1 minus 1 from team 1
+                team2 --;
+            }
+            
+        }
     }
 
 }
@@ -220,12 +257,15 @@ function GetDistance (x1, y1, x2, y2) {
 }
 
 var team1 = 0;//Number of players in team 1.
+var team1Score = 0;//Holds the kills of the team 1.
 var team2 = 0;//Number of players in team 2.
+var team2Score = 0 //Holds the kills of team 2
+
 
 io.sockets.on ('connection', function (socket){
-
+    
     console.log ('socket connection');
-
+    
     socket.on ("login", function (data){
         socket.id = Math.random (); //creates a random ID for the new connection
         SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
@@ -246,8 +286,9 @@ io.sockets.on ('connection', function (socket){
         }
     
 
-        var player = new Player (socket.id, data.username, current_team); //constructs a new Player instance
+        var player = new Player (socket.id, data.username, current_team,5,0); //constructs a new Player instance
         PLAYER_LIST [socket.id] = player; //adds the new player to the list
+
 
         socket.emit ('sendResult', {
             connected: true,
