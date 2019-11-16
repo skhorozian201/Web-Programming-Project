@@ -52,12 +52,64 @@ class Projectile {
 
 class Spell { //Spell abstract class
     constructor () {
+        this.spellCooldown = 0;//spell cooldown
+    }
+
+    SpellOnInitialization (caster) {
+
+    }
+
+    SpellCast (target, caster) { //function called when the spell is used.
+        
+    }
+
+}
+
+class PaladinHeal extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+    }
+
+    SpellOnInitialization (caster) {
+        
+    }
+
+    SpellCast (caster) {
+        caster.actionTimer = 15;
+        caster.SendHeal (80,caster);
         this.spellCooldown = 1;
     }
-     //spell cooldown
+}
 
-    SpellCast () { //function called when the spell is used.
-    
+class PaladinDash extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+        this.x_velo = 0;
+        this.y_velo = 0;
+        this.framesLeft = 0;
+    }
+
+    SpellOnInitialization (caster) {
+        caster.perFrameEvent.push (this.FrameMovement);
+    }
+
+    SpellCast (caster) {
+        var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+        this.x_velo = (Math.cos(angle));
+        this.y_velo = (Math.sin(angle));
+        this.framesLeft = 10;
+        caster.actionTimer = 10;
+        this.spellCooldown = 1;
+    }
+
+    FrameMovement (caster) {
+        if (this.framesLeft > 0) {
+            caster.x_position += this.x_velo * 2;
+            caster.x_position += this.x_velo * 2;
+            this.framesLeft--;
+        }
     }
 
 }
@@ -105,15 +157,25 @@ class Player {
 
         //This is used to call all the functions in the list once every frame. 
         //Parameters (player)
-        this.perFrameEvent = {}; 
+        this.perFrameEvent = []; 
 
         //This is used to call all the functions in the list everytime the player deals damage.
         //Parameters (player (this), player (damage taker), number (damage))
-        this.onDealingDamageEvent = {}; 
+        this.onDealingDamageEvent = []; 
 
         //This is used to call all the functions in the list everytime the player takes damage.
         //Parameters (player (this), player (damage dealer), number (damage))
-        this.onTakingDamageEvent = {};
+        this.onTakingDamageEvent = [];
+
+        
+        //Class Spells
+        this.spell1 = new PaladinHeal (); //Construct spells for the player
+        this.spell2 = new PaladinDash ();
+        this.spell3 = new PaladinHeal ();
+
+        this.spell1.SpellOnInitialization (this); //Calls their initialization function
+        this.spell2.SpellOnInitialization (this);
+        this.spell3.SpellOnInitialization (this);
 
         //Status effects
         this.isDead = false; //This is death...
@@ -144,11 +206,14 @@ class Player {
 
     CastSpell (spellNumb) {
         if (spellNumb == 0) {
-
+            if (this.spell1.spellCooldown <= 0 && this.actionTimer <= 0)
+                this.spell1.SpellCast (this);
         } else if (spellNumb == 1) {
-
+            if (this.spell2.spellCooldown <= 0 && this.actionTimer <= 0)
+                this.spell2.SpellCast (this);
         } else if (spellNumb == 2) {
-
+            if (this.spell3.spellCooldown <= 0 && this.actionTimer <= 0)
+                this.spell3.SpellCast (this);
         }
     }
 
@@ -329,6 +394,21 @@ setInterval (function () {
         
         if (player.actionTimer > 0) {
             player.actionTimer--;
+        }
+
+        if (player.spell1.spellCooldown > 0) {
+            player.spell1.spellCooldown--;
+        }
+        if (player.spell2.spellCooldown > 0) {
+            player.spell2.spellCooldown--;
+        }
+        if (player.spell3.spellCooldown > 0) {
+            player.spell3.spellCooldown--;
+        }
+
+        for (var i in player.perFrameEvent) {
+            func = player.perFrameEvent [i];
+            func (player);
         }
 
         //This adds the new position data to the list
