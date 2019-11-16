@@ -11,7 +11,17 @@
 		
 	</head>
 
-	<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000" ></canvas>
+	<div id="loginDiv">
+		Username: <input id="loginUsername" type="text"></input><br>
+		Password: <input id="loginPassword" type="text"></input>
+		<button id="loginButton">Login</button>
+		<button id="signupButton">Sign Up</button>
+	</div>
+
+	<div id="gameDiv">
+		<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000" ></canvas>
+	</div>
+
 
 	<script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
@@ -19,78 +29,98 @@
 		var socket = io ();
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
-		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
-		var current_name = prompt("Please enter your name", "Player");//Creates a prompt and stores the values in current_username.
 		
+		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
 		var hammerImage = document.getElementById ("hammerImageAnchor");
 
-		while (current_name == null || current_name ==  "") {
-			current_name = prompt("Please enter your name", "Player");
-		}
+		var loginNameElement = document.getElementById ("loginUsername");
+		var loginPasswordElement = document.getElementById ("loginPassword");
+
+		var loginButton = document.getElementById ("loginButton");
+		var signUpButton = document.getElementById ("signupButton");
+
+		var connected = false;
+
+		loginButton.onclick = function () {
+			socket.emit ("login",{username: loginNameElement.value, password: loginPasswordElement.value});
+			console.log ("clicc");
+		};
+
+		var localPlayerID;
+
+		socket.on ('sendResult', function (data) {
+				localPlayerID = data.id;
+				console.log (localPlayerID);
+				connected = data.connected;
+				if (connected) {
+					loginButton.disabled = true;
+					signUpButton.disabled = true;
+					loginNameElement.disabled = true;
+					loginPasswordElement.disabled = true;
+				}
+		});
 
 		ctx.font = "30px Arial";
 
 		document.addEventListener('contextmenu', event => event.preventDefault());
 
-		socket.emit ('playerInitializationData', {
-			name: current_name
-		}); 
-
-		var PlayerID;
-
-		socket.on ('sendPlayerID', function (data) {
-			PlayerID = data.id;
-			console.log (PlayerID);
-		});
+		var localPlayerx = 0;
+		var localPlayery = 0;
 
 		socket.on ('sendPositionData',function (data) //This receives the data on the players movement and renders each and single player
 		{
-			ctx.clearRect (0,0,960,540);
-			ctx.save ();
+			if (connected){
+				ctx.clearRect (0,0,960,540);
 
-			for (var i = 0; i < data.playerDataPack.length; i++)
-			{
-				var player = data.playerDataPack [i];
+				for (var i = 0; i < data.playerDataPack.length; i++)
+				{
+					var player = data.playerDataPack [i]; 
+					if (player.id == localPlayerID) {
+						
+					} else {
 
-				if (player.team == 1)
-					ctx.fillStyle = "#0000A0";
-				else 
-					ctx.fillStyle = "#A00000";
-				ctx.fillText ( player.name, player.x - 80, player.y - 100);
-				ctx.fillStyle = "#FF0000" ;
-				ctx.fillRect ( player.x - 80, player.y - 90, 100, 5 ); 
-				ctx.fillStyle = "#00FF00" ;
-				ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
+					}
 
-				ctx.drawImage ( playerImage, player.x - 80, player.y - 80, 160, 160);
+					if (player.team == 1)
+						ctx.fillStyle = "#0000A0";
+					else 
+						ctx.fillStyle = "#A00000";
+					ctx.fillText ( player.name, player.x - 80, player.y - 100);
+					ctx.fillStyle = "#FF0000" ;
+					ctx.fillRect ( player.x - 80, player.y - 90, 100, 5 ); 
+					ctx.fillStyle = "#00FF00" ;
+					ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
 
-				//if (player.id == PlayerID)
-					//ctx.translate (player.x + (ctx.width / 2), player.y + (ctx.height / 2));
+					ctx.drawImage ( playerImage, player.x - 80, player.y - 80, 160, 160);
+				}
+
+				for (var i = 0; i < data.projectileDataPack.length; i++)
+				{
+					var projectile = data.projectileDataPack [i];
+					ctx.drawImage (hammerImage, projectile.x - 20, projectile.y - 20, 40, 40);
+				}
 			}
 
-			for (var i = 0; i < data.projectileDataPack.length; i++)
-			{
-				var projectile = data.projectileDataPack [i];
-				ctx.drawImage (hammerImage, projectile.x - 20, projectile.y - 20, 40, 40);
-			}
-
-			ctx.restore ();
 		});
 
 		var moveDirs = [false, false, false, false]; //Movement input directions
 
 		function sendMoveInput () { //This sends the data to the server
-			socket.emit ('sendMoveDirs', {
-				moveDirections: moveDirs
-			});
+			if (connected){
+				socket.emit ('sendMoveDirs', {
+					moveDirections: moveDirs
+				});
+			}
 		}
 
 		function sendSpellInput (spellNumber) {
-			socket.emit ('sendSpellInput', {
-				spellNumber: spellNumber
-			});
+			if (connected){
+				socket.emit ('sendSpellInput', {
+					spellNumber: spellNumber
+				});
+			}
 		}
-         
+		
 		//This is just input
 		function keyPress (e) {
 			switch (e.keyCode) {
@@ -145,10 +175,12 @@
 
 		var attackClick = [false, false];
 		function sendAttackInput () { //This sends the attack (based on click) data to the server via socket.
-			socket.emit ('sendAttackInput', {
-				primary: attackClick [0], 
-				secondary: attackClick [1]
-			});
+			if (connected){
+				socket.emit ('sendAttackInput', {
+					primary: attackClick [0], 
+					secondary: attackClick [1]
+				});
+			}
 		}
 
 		function attackDown(event) {
@@ -180,10 +212,12 @@
 			var positionX = event.clientX;
 			var positionY = event.clientY;
 
-			socket.emit("sendMousePosition", {
-                x: positionX,
-				y: positionY
-			 });
+			if (connected){
+				socket.emit("sendMousePosition", {
+					x: positionX,
+					y: positionY
+				});	
+			}
 		}
 
 		document.onkeydown = keyPress;
@@ -191,7 +225,6 @@
 		document.onmouseup = clickLifted;
 		document.onmousedown = attackDown;
 		document.onmousemove = mousePosition;
-
 	</script>
 
 </html>

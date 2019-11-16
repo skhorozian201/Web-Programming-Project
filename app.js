@@ -8,7 +8,8 @@ app.get ('/', function (req, res) {
 app.use (express.static('client')); //Allows for access of static files from within the "client" folder
 
 serv.listen (2000); //listens to port :2000
-console.log ("Server started...");
+
+console.log ("Server Initialized");
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
@@ -222,40 +223,45 @@ var team1 = 0;//Number of players in team 1.
 var team2 = 0;//Number of players in team 2.
 
 io.sockets.on ('connection', function (socket){
-    socket.id = Math.random (); //creates a random ID for the new connection
-    SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
-    var current_team = 1 ;//Created a var for current team . it will have 2 values.
-    //When we have a new connection. To decide the team we check which team has less players. and add that player to that team.
-    if (team1 == team2){//if they are equal add that player to team 1.
-        current_team = 1;
-        team1 ++;
-        
-    } 
-    else if (team1 > team2){//If players in team 1 are more than the players in team 2 . add the new player to team 2.
-        current_team = 2;
-        team2 ++;
-    } 
-    else if (team1 < team2){//If players in team 2 are more than the players in team 1 . add the new player to team 1.
-        current_team = 1;
-        team1 ++; 
-    }
-    
-
-    var player = new Player (socket.id,"Player", current_team); //constructs a new Player instance
-    PLAYER_LIST [socket.id] = player; //adds the new player to the list
-
-    socket.emit ('sendPlayerID', {
-        id: socket.id
-    });
 
     console.log ('socket connection');
+
+    socket.on ("login", function (data){
+        socket.id = Math.random (); //creates a random ID for the new connection
+        SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
+        var current_team = 1 ;//Created a var for current team . it will have 2 values.
+        //When we have a new connection. To decide the team we check which team has less players. and add that player to that team.
+        if (team1 == team2){//if they are equal add that player to team 1.
+            current_team = 1;
+            team1 ++;
+            
+        } 
+        else if (team1 > team2){//If players in team 1 are more than the players in team 2 . add the new player to team 2.
+            current_team = 2;
+            team2 ++;
+        } 
+        else if (team1 < team2){//If players in team 2 are more than the players in team 1 . add the new player to team 1.
+            current_team = 1;
+            team1 ++; 
+        }
     
+
+        var player = new Player (socket.id, data.username, current_team); //constructs a new Player instance
+        PLAYER_LIST [socket.id] = player; //adds the new player to the list
+
+        socket.emit ('sendResult', {
+            connected: true,
+            id: socket.id
+        });
+
+    });
+
     socket.on ('disconnect',function(){ //When a player disconnects from the game
         //Just to balance the teams , so next spawn is on the team with less players.
-        if (player.team == 1){//If the player is from team 2 , minus 1 from team2
+        if (PLAYER_LIST[socket.id].team == 1){//If the player is from team 2 , minus 1 from team2
             team1 --;
         }
-        else if (player.team == 2){//If player is from team1 minus 1 from team 1
+        else if (PLAYER_LIST[socket.id].team == 2){//If player is from team1 minus 1 from team 1
             team2 --;
         } 
         delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
