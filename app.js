@@ -101,8 +101,8 @@ class Player {
         this.isImmune = false; //This is when the player is immune to damage
         this.isUntargetable = false; //This is when the cannot be interacted with
 
-        this.mousepositionX = false; //This is the y - coordinate for the current mouse positon.
-        this.mousepositionY = false; //This is the x - coordinate for the current mouse positon.
+        this.mousepositionX = 0; //This is the y - coordinate for the current mouse positon.
+        this.mousepositionY = 0; //This is the x - coordinate for the current mouse positon.
 
     }
 
