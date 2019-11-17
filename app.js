@@ -237,7 +237,7 @@ class Player {
                 }
                 this.Death ();//Call death function on current player
                 if (team2Score ==10 || team1Score ==10){//Whoever reaches 10 points wins
-                    io.sockets.emit("disconnect")//Catch that on html side and end the game
+                    io.sockets.emit("gameOver")//Catch that on html side and end the game
                     io.sockets.server.close();//Closes the game
                     console.log ('socket disconnect');
                 }
@@ -295,22 +295,20 @@ class Player {
     }
 
     Respawn(){//Respawn   
+        if ( this.team == 2 ){
+            this.x_position = 50; //Player position on the x-axis
+            this.y_position = 50; //Player position on the y-axis
+        } else {
+            this.x_position = 780; //Player position on the x-axis
+            this.y_position = 320; //Player position on the y-axis
+        }
+        player.currentHealth = player.maxHealth;
             setTimeout(function (player) {//Gives a 5 sec delay before executing the function.
                 console.log ("Respawning " + player.name);
                 player.isImmune = false;
                 player.isDead = false;
                 player.isUntargetable = false
-
-                if ( player.team == 2 ){
-                    player.x_position = 50; //Player position on the x-axis
-                    player.y_position = 50; //Player position on the y-axis
-                } else {
-                    player.x_position = 780; //Player position on the x-axis
-                    player.y_position = 320; //Player position on the y-axis
-                }
-
-                player.currentHealth = player.maxHealth;
-            }, 100, this);
+            }, 3000, this);
         
     }
 
