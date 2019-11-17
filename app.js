@@ -40,7 +40,7 @@ class Projectile {
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
-            this.owner.DealDamage (100, hit);
+            this.owner.DealDamage (25, hit);
             this.DestroyThis (i);
         }
     }
@@ -171,12 +171,13 @@ class Player {
                     team2Score ++ ;
                 }
                 console.log(team2Score);
-                // if (team2Score > 2){
-                //    code for closing the server.
-                // }
                 this.Death ();//Call death function on current player
                 this.Respawn();//Call respawn method.
-               
+                if (team2Score ==10 || team1Score ==10){//Whoever reaches 10 points wins
+                    io.sockets.emit("disconnect")//Catch that on html side and end the game
+                    io.sockets.server.close();//Closes the game
+                    console.log ('socket disconnect');
+                }
             }
         }
         else {
@@ -234,7 +235,7 @@ class Player {
                 PLAYER_LIST[x.id] = new Player (x.id, x.name, x.team,x.lives,x.kills);  
             }, 5000,this);
         }
-        else {//If no more lives left 
+        else {//If no more lives left    
             this.Death();//Freeze the player for ever.
             if (this.team == 1){//If the player is from team 2 , minus 1 from team2
                 team1 --;
@@ -247,7 +248,6 @@ class Player {
     }
 
 }
-
 //Use this function to get distance between two points
 function GetDistance (x1, y1, x2, y2) {
     var final_x = x2-x1; 
