@@ -77,8 +77,8 @@ class PaladinHeal extends Spell {
 
     SpellCast (caster) {
         caster.actionTimer = 15;
-        caster.SendHeal (80,caster);
-        this.spellCooldown = 1;
+        caster.SendHeal (40,caster);
+        this.spellCooldown = 200;
     }
 }
 
@@ -96,19 +96,20 @@ class PaladinDash extends Spell {
     }
 
     SpellCast (caster) {
-        var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+        var angle = Math.atan2 (caster.mousePositionY-caster.y_position,caster.mousePositionX-caster.x_position);
+        console.log (angle);
         this.x_velo = (Math.cos(angle));
         this.y_velo = (Math.sin(angle));
         this.framesLeft = 10;
         caster.actionTimer = 10;
-        this.spellCooldown = 1;
+        this.spellCooldown = 100;
     }
 
     FrameMovement (caster) {
-        if (this.framesLeft > 0) {
-            caster.x_position += this.x_velo * 2;
-            caster.x_position += this.x_velo * 2;
-            this.framesLeft--;
+        if (caster.spell2.framesLeft > 0) {
+            caster.x_position += caster.spell2.x_velo * 20;
+            caster.y_position += caster.spell2.y_velo * 20;
+            caster.spell2.framesLeft--;
         }
     }
 
@@ -118,11 +119,10 @@ class PaladinDash extends Spell {
 class Player {
    
 
-    constructor (id, name,team,lives,kills) {
+    constructor (id, name,team,kills) {
         this.id = id; //Player ID
         this.name = name; //Player Name
         this.team = team; //Player team
-        this.lives = lives;//Player lives which will be 5
         this.kills = kills;//PLayer total kills
 
         if ( this.team == 2 ){
@@ -135,7 +135,7 @@ class Player {
 
         this.radius = 60;
 
-        this.maxHealth = 300; //Player maximum health
+        this.maxHealth = 150; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
 
         this.moveSpeed = 5; //Player movement speed
@@ -235,9 +235,7 @@ class Player {
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
                     team2Score ++ ;
                 }
-                console.log(team2Score);
                 this.Death ();//Call death function on current player
-                this.Respawn();//Call respawn method.
                 if (team2Score ==10 || team1Score ==10){//Whoever reaches 10 points wins
                     io.sockets.emit("disconnect")//Catch that on html side and end the game
                     io.sockets.server.close();//Closes the game
@@ -246,7 +244,8 @@ class Player {
             }
         }
         else {
-            damage = 0;}
+            damage = 0;
+        }
 
 
         return damage; //Return the damage incase it changes... somehow...
@@ -259,12 +258,15 @@ class Player {
     //heal is the number
     //healer is the player doing the healing
     TakeHeal (heal, healer) {
-        this.currentHealth += heal; //add current health by heal
+        if (!this.isDead){
+            this.currentHealth += heal; //add current health by heal
 
-        if (this.currentHealth >= this.maxHealth) //If the player's health reaches its max
-            this.currentHealth = this.maxHealth; //then cap it at the MaxHealth
+            if (this.currentHealth >= this.maxHealth) //If the player's health reaches its max
+                this.currentHealth = this.maxHealth; //then cap it at the MaxHealth
 
-        return heal; //Return the heal value incase it changes... somehow...
+            return heal; //Return the heal value incase it changes... somehow...
+        } else 
+            return 0;
     }
 
     //Called when this player wants to deal damage
@@ -287,29 +289,29 @@ class Player {
     Death () {
         this.isImmune = true;//Kepp them immune for 5 seconds
         this.isDead = true;//Keep them //dead for 5 seconds
-        this.lives --;//Life minus 1.
         this.isUntargetable = true;//Cant hit them
         console.log (this.name + " died.");       
-        
+        this.Respawn ();
     }
 
-    Respawn(){//Respawn them
-        if (this.lives >0){ //If he has a life then respawn them but with a 5 sec delay       
-            setTimeout(function (x) {//Gives a 5 sec delay before executing the function.
-                //Just a trick as i could not acess the current player from inside this method i passed that player(this) as parameter to this mehtod. 
-                PLAYER_LIST[x.id] = new Player (x.id, x.name, x.team,x.lives,x.kills);  
-            }, 5000,this);
-        }
-        else {//If no more lives left    
-            this.Death();//Freeze the player for ever.
-            if (this.team == 1){//If the player is from team 2 , minus 1 from team2
-                team1 --;
-            }
-            else if (this.team == 2){//If player is from team1 minus 1 from team 1
-                team2 --;
-            }
-            
-        }
+    Respawn(){//Respawn   
+            setTimeout(function (player) {//Gives a 5 sec delay before executing the function.
+                console.log ("Respawning " + player.name);
+                player.isImmune = false;
+                player.isDead = false;
+                player.isUntargetable = false
+
+                if ( player.team == 2 ){
+                    player.x_position = 50; //Player position on the x-axis
+                    player.y_position = 50; //Player position on the y-axis
+                } else {
+                    player.x_position = 780; //Player position on the x-axis
+                    player.y_position = 320; //Player position on the y-axis
+                }
+
+                player.currentHealth = player.maxHealth;
+            }, 100, this);
+        
     }
 
 }
@@ -351,7 +353,7 @@ io.sockets.on ('connection', function (socket){
         }
     
 
-        var player = new Player (socket.id, data.username, current_team,5,0); //constructs a new Player instance
+        var player = new Player (socket.id, data.username, current_team, 0); //constructs a new Player instance
         PLAYER_LIST [socket.id] = player; //adds the new player to the list
 
 
