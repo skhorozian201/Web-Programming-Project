@@ -4,17 +4,38 @@ var serv = require ('http').Server (app);
 
 //the following is to connect to the mysql database for the login system
 const mysqlDB = require('mysql');
-const connection = mysqlDB.createConnection ({
+const connection = mysqlDB.createConnection({
     host: 'localhost',
+    port: '2000',
     username: 'username',
-    password: 'password'
+    password: 'password',
 });
+
+connection.connect(function(err) {
+    if (err) {
+      console.error('error connecting: ' + err.stack);
+      console.error (err.code);
+      return;
+    }
+
+    console.log('connected as id ' + connection.threadId);
+
+    let sql = 'CREATE DATABASE nodemysql';
+    connection.query(sql, function (err, result) {
+        if (err) throw err;
+        console.log("Result: " + result);
+    });
+});
+
+app.get ('/', function (req, res) {
+    res.sendFile (__dirname + '/client/index.html');
+});
+
+app.use (express.static('client')); //Allows for access of static files from within the "client" folder
 
 serv.listen (2000); //listens to port :2000
 
 console.log ("Server Initialized");
-
-
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
