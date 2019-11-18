@@ -143,11 +143,11 @@ class PaladinDash extends Spell {
 class Player {
    
 
-    constructor (id, name,team,kills) {
+    constructor (id, name,team) {
         this.id = id; //Player ID
         this.name = name; //Player Name
         this.team = team; //Player team
-        this.kills = kills;//PLayer total kills
+        this.kills = 0;//PLayer total kills. Start from 0
 
         if ( this.team == 2 ){
             this.x_position = 50; //Player position on the x-axis
@@ -377,7 +377,7 @@ io.sockets.on ('connection', function (socket){
         }
     
 
-        var player = new Player (socket.id, data.username, current_team, 0); //constructs a new Player instance
+        var player = new Player (socket.id, data.username, current_team); //constructs a new Player instance
         PLAYER_LIST [socket.id] = player; //adds the new player to the list
 
 
@@ -390,15 +390,17 @@ io.sockets.on ('connection', function (socket){
 
     socket.on ('disconnect',function(){ //When a player disconnects from the game
         //Just to balance the teams , so next spawn is on the team with less players.
-        if (PLAYER_LIST[socket.id].team == 1){//If the player is from team 2 , minus 1 from team2
-            team1 --;
-        }
-        else if (PLAYER_LIST[socket.id].team == 2){//If player is from team1 minus 1 from team 1
-            team2 --;
-        } 
-        delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
-        delete PLAYER_LIST[socket.id];
-        console.log ('socket disconnect');
+        if (PLAYER_LIST.includes(socket.id)){
+            if (PLAYER_LIST[socket.id].team == 1){//If the player is from team 2 , minus 1 from team2
+                team1 --;
+            }
+            else if (PLAYER_LIST[socket.id].team == 2){//If player is from team1 minus 1 from team 1
+                team2 --;
+            } 
+            delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
+            delete PLAYER_LIST[socket.id];
+            console.log ('socket disconnect');
+    }
     });
 
     socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client  
