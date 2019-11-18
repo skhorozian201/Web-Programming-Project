@@ -236,7 +236,7 @@ class Player {
                     team2Score ++ ;
                 }
                 this.Death ();//Call death function on current player
-                if (team2Score ==10 || team1Score ==10){//Whoever reaches 10 points wins
+                if (team2Score ==2 || team1Score ==2){//Whoever reaches 10 points wins
                     io.sockets.emit("disconnect")//Catch that on html side and end the game
                     io.sockets.server.close();//Closes the game
                     console.log ('socket disconnect');
@@ -310,7 +310,7 @@ class Player {
                 }
 
                 player.currentHealth = player.maxHealth;
-            }, 100, this);
+            }, 5000, this);
         
     }
 
@@ -377,11 +377,11 @@ io.sockets.on ('connection', function (socket){
         console.log ('socket disconnect');
     });
 
-    socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client
+    socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client  
         PLAYER_LIST [socket.id].moveUpInput = data.moveDirections[0],
         PLAYER_LIST [socket.id].moveDownInput = data.moveDirections[1],
         PLAYER_LIST [socket.id].moveRightInput = data.moveDirections[2],
-        PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3]
+        PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3];
     });
     socket.on ('sendAttackInput',function (data) { //This is to receive the data of the players attack choice input from the client
         PLAYER_LIST [socket.id].primaryAttack = data.primary,
@@ -391,8 +391,10 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].name = data.name;
     });
     socket.on('sendMousePosition', function (data) { //This is to recieve the data of the player's mouse positon.
-        PLAYER_LIST [socket.id].mousePositionX = data.x;
-        PLAYER_LIST [socket.id].mousePositionY = data.y;
+        if (!PLAYER_LIST [socket.id].isDead){
+            PLAYER_LIST [socket.id].mousePositionX = data.x;
+            PLAYER_LIST [socket.id].mousePositionY = data.y;
+        }
     });
     socket.on ('sendSpellInput', function (data) { //This is to receive the player spell cast input.
         PLAYER_LIST [socket.id].CastSpell (data.spellNumber);
@@ -454,6 +456,8 @@ setInterval (function () {
             func (player);
         }
 
+        var isFacingRight = player.mousePositionX - player.x_position >= 0;
+
         //This adds the new position data to the list
         playerDataPack.push ({
             x: player.x_position,
@@ -462,7 +466,9 @@ setInterval (function () {
             team: player.team,
             maxHealth: player.maxHealth,
             currentHealth: player.currentHealth,
-            id: player.id
+            id: player.id,
+            isdead: player.isDead,
+            isRight: isFacingRight
         });
         
     }

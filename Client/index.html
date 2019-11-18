@@ -5,7 +5,10 @@
 			Game
 		</title>
 		<a>
-			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "paladinRight" src = "img/Paladin.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "paladinLeft" src = "img/Paladin1.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "paladinDeadRight" src = "img/PaladinDeath.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "paladinDeadLeft" src = "img/PaladinDeath1.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "hammerImageAnchor" src = "img/Hammer.png" style = "width:10px; height:10px; display: none;" ></img>
 		</a>
 		
@@ -30,7 +33,8 @@
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
 		
-		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
+		var playerImage = [document.getElementById("paladinRight"), document.getElementById("paladinLeft"), document.getElementById("paladinDeadRight"), document.getElementById("paladinDeadLeft")]; //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
+		
 		var hammerImage = document.getElementById ("hammerImageAnchor");
 
 		var loginNameElement = document.getElementById ("loginUsername");
@@ -91,7 +95,18 @@
 					ctx.fillStyle = "#00FF00" ;
 					ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
 
-					ctx.drawImage ( playerImage, player.x - 80, player.y - 80, 160, 160);
+					if (!player.isRight) {
+						if (!player.isdead)
+							ctx.drawImage ( playerImage[1], player.x - 120, player.y - 80, 160, 160);
+						else 
+							ctx.drawImage ( playerImage[3], player.x - 80, player.y - 80, 160, 160);
+					} else {
+						if (!player.isdead)
+							ctx.drawImage ( playerImage[0], player.x - 80, player.y - 80, 160, 160);
+						else
+							ctx.drawImage ( playerImage[2], player.x - 80, player.y - 80, 160, 160);
+					}
+
 				}
 
 				for (var i = 0; i < data.projectileDataPack.length; i++)
