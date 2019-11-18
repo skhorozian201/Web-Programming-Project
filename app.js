@@ -330,8 +330,8 @@ var team2Score = 0 //Holds the kills of team 2
 io.sockets.on ('connection', function (socket){
     
     console.log ('socket connection');
+        socket.on ("login", function (data){
     
-    socket.on ("login", function (data){
         socket.id = Math.random (); //creates a random ID for the new connection
         SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
         var current_team = 1 ;//Created a var for current team . it will have 2 values.
