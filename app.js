@@ -4,36 +4,17 @@ var serv = require ('http').Server (app);
 
 //the following is to connect to the mysql database for the login system
 const mysqlDB = require('mysql');
-const connection = mysqlDB.createConnection({
+const connection = mysqlDB.createConnection ({
     host: 'localhost',
     username: 'username',
-    password: 'password',
-    database: 'mysql',
-  });
-
-  connection.connect((err) => { //exception in case we encounter an error.
-    if(err){
-      console.log('Cannot connect to DB at this time, please try again later.');
-      return;
-    }
-    console.log('You are connected!');
-  });
-
-  connection.end((err) => {});
-// You can query into the mysql database using this code
-  con.query('INSERT INTO users SET ?', this.id, (err, res) => {
-    if(err) throw err;
-  });
-  //I am supposed to do the same for password but im still not sure of the variables we shoud use.
-
-app.get ('/', function (req, res) {
-    res.sendFile (__dirname + '/client/index.html');
+    password: 'password'
 });
-app.use (express.static('client')); //Allows for access of static files from within the "client" folder
 
 serv.listen (2000); //listens to port :2000
 
 console.log ("Server Initialized");
+
+
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
