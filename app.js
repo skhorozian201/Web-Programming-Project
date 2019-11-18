@@ -2,6 +2,30 @@ var express = require ('express');
 var app = express ();
 var serv = require ('http').Server (app);
 
+//the following is to connect to the mysql database for the login system
+const mysqlDB = require('mysql');
+const connection = mysqlDB.createConnection({
+    host: 'localhost',
+    username: 'username',
+    password: 'password',
+    database: 'mysql',
+  });
+
+  connection.connect((err) => { //exception in case we encounter an error.
+    if(err){
+      console.log('Cannot connect to DB at this time, please try again later.');
+      return;
+    }
+    console.log('You are connected!');
+  });
+
+  connection.end((err) => {});
+// You can query into the mysql database using this code
+  con.query('INSERT INTO users SET ?', this.id, (err, res) => {
+    if(err) throw err;
+  });
+  //I am supposed to do the same for password but im still not sure of the variables we shoud use.
+
 app.get ('/', function (req, res) {
     res.sendFile (__dirname + '/client/index.html');
 });
@@ -236,8 +260,8 @@ class Player {
                     team2Score ++ ;
                 }
                 this.Death ();//Call death function on current player
-                if (team2Score ==10 || team1Score ==10){//Whoever reaches 10 points wins
-                    io.sockets.emit("gameOver")//Catch that on html side and end the game
+                if (team2Score ==2 || team1Score ==2){//Whoever reaches 10 points wins
+                    io.sockets.emit("disconnect")//Catch that on html side and end the game
                     io.sockets.server.close();//Closes the game
                     console.log ('socket disconnect');
                 }
@@ -295,20 +319,22 @@ class Player {
     }
 
     Respawn(){//Respawn   
-        if ( this.team == 2 ){
-            this.x_position = 50; //Player position on the x-axis
-            this.y_position = 50; //Player position on the y-axis
-        } else {
-            this.x_position = 780; //Player position on the x-axis
-            this.y_position = 320; //Player position on the y-axis
-        }
-        player.currentHealth = player.maxHealth;
             setTimeout(function (player) {//Gives a 5 sec delay before executing the function.
                 console.log ("Respawning " + player.name);
                 player.isImmune = false;
                 player.isDead = false;
                 player.isUntargetable = false
-            }, 3000, this);
+
+                if ( player.team == 2 ){
+                    player.x_position = 50; //Player position on the x-axis
+                    player.y_position = 50; //Player position on the y-axis
+                } else {
+                    player.x_position = 780; //Player position on the x-axis
+                    player.y_position = 320; //Player position on the y-axis
+                }
+
+                player.currentHealth = player.maxHealth;
+            }, 5000, this);
         
     }
 
@@ -330,8 +356,8 @@ var team2Score = 0 //Holds the kills of team 2
 io.sockets.on ('connection', function (socket){
     
     console.log ('socket connection');
-        socket.on ("login", function (data){
     
+    socket.on ("login", function (data){
         socket.id = Math.random (); //creates a random ID for the new connection
         SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
         var current_team = 1 ;//Created a var for current team . it will have 2 values.
@@ -375,11 +401,11 @@ io.sockets.on ('connection', function (socket){
         console.log ('socket disconnect');
     });
 
-    socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client
+    socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client  
         PLAYER_LIST [socket.id].moveUpInput = data.moveDirections[0],
         PLAYER_LIST [socket.id].moveDownInput = data.moveDirections[1],
         PLAYER_LIST [socket.id].moveRightInput = data.moveDirections[2],
-        PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3]
+        PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3];
     });
     socket.on ('sendAttackInput',function (data) { //This is to receive the data of the players attack choice input from the client
         PLAYER_LIST [socket.id].primaryAttack = data.primary,
@@ -389,8 +415,10 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].name = data.name;
     });
     socket.on('sendMousePosition', function (data) { //This is to recieve the data of the player's mouse positon.
-        PLAYER_LIST [socket.id].mousePositionX = data.x;
-        PLAYER_LIST [socket.id].mousePositionY = data.y;
+        if (!PLAYER_LIST [socket.id].isDead){
+            PLAYER_LIST [socket.id].mousePositionX = data.x;
+            PLAYER_LIST [socket.id].mousePositionY = data.y;
+        }
     });
     socket.on ('sendSpellInput', function (data) { //This is to receive the player spell cast input.
         PLAYER_LIST [socket.id].CastSpell (data.spellNumber);
@@ -452,6 +480,8 @@ setInterval (function () {
             func (player);
         }
 
+        var isFacingRight = player.mousePositionX - player.x_position >= 0;
+
         //This adds the new position data to the list
         playerDataPack.push ({
             x: player.x_position,
@@ -460,7 +490,9 @@ setInterval (function () {
             team: player.team,
             maxHealth: player.maxHealth,
             currentHealth: player.currentHealth,
-            id: player.id
+            id: player.id,
+            isdead: player.isDead,
+            isRight: isFacingRight
         });
         
     }
