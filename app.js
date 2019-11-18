@@ -9,7 +9,9 @@ const connection = mysqlDB.createConnection ({
     username: 'username',
     password: 'password'
 });
-
+app.get ('/', function (req, res) {
+    res.sendFile (__dirname + '/client/index.html');
+});
 serv.listen (2000); //listens to port :2000
 
 console.log ("Server Initialized");
@@ -371,7 +373,7 @@ io.sockets.on ('connection', function (socket){
 
     socket.on ('disconnect',function(){ //When a player disconnects from the game
         //Just to balance the teams , so next spawn is on the team with less players.
-        if (PLAYER_LIST.includes(socket.id)){
+        if (PLAYER_LIST[socket.id]){
             if (PLAYER_LIST[socket.id].team == 1){//If the player is from team 2 , minus 1 from team2
                 team1 --;
             }
@@ -379,9 +381,12 @@ io.sockets.on ('connection', function (socket){
                 team2 --;
             } 
             delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
+            console.log (PLAYER_LIST[socket.id].name + ' disconnected');
             delete PLAYER_LIST[socket.id];
-            console.log ('socket disconnect');
-    }
+        }
+        else {
+            console.log ('socket disconnected');
+        }
     });
 
     socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client  
