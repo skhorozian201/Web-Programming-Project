@@ -8,22 +8,15 @@ const connection = mysqlDB.createConnection({
     host: 'localhost',
     port: '2000',
     username: 'username',
-    password: 'password',
+    password: 'password'
 });
 
 connection.connect(function(err) {
-    if (err) {
-      console.error('error connecting: ' + err.stack);
-      console.error (err.code);
-      return;
-    }
-
-    console.log('connected as id ' + connection.threadId);
-
-    let sql = 'CREATE DATABASE nodemysql';
+    if (err) throw err;
+    console.log("Connected!");
     connection.query(sql, function (err, result) {
-        if (err) throw err;
-        console.log("Result: " + result);
+      if (err) throw err;
+      console.log("Result: " + result);
     });
 });
 
@@ -36,6 +29,7 @@ app.use (express.static('client')); //Allows for access of static files from wit
 serv.listen (2000); //listens to port :2000
 
 console.log ("Server Initialized");
+  
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
