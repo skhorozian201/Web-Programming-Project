@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/skhorozian201/Web-Programming-Project#readme",
   "dependencies": {
+    "mongodb": "^3.3.4",
     "mysql": "^2.17.1"
   }
 }
