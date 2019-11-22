@@ -243,8 +243,9 @@ class Player {
                     team2Score ++ ;
                 }
                 this.Death ();//Call death function on current player
-                if (team2Score ==2 || team1Score ==2){//Whoever reaches 10 points wins
-                    io.sockets.emit("disconnect")//Catch that on html side and end the game
+                if (team2Score ==10 || team1Score ==10){//Whoever reaches 10 points wins
+                    var pack = {team1Score,team1,team2Score,team2}
+                    io.sockets.emit("disconnect",pack)//Catch that on html side and end the game
                     io.sockets.server.close();//Closes the game
                     console.log ('socket disconnect');
                 }

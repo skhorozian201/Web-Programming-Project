@@ -240,6 +240,14 @@
 		document.onmouseup = clickLifted;
 		document.onmousedown = attackDown;
 		document.onmousemove = mousePosition;
+		socket.on("GameOver",function(pack){
+			if(pack.team2Score > pack.team1Score){
+				document.write("Game Over  Team 2 Wins")
+			}
+			else{
+				document.write("Game Over  Team 1 Wins")
+			}
+		}
 	</script>
 
 </html>
