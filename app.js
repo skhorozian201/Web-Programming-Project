@@ -280,7 +280,11 @@ class Player {
             if (this.currentHealth <= 0) { //If the player's current health drops to 0
                 this.currentHealth = 0; //Current health never drops below 0
                 dealer.kills ++; //Give the dealer a kill
-                
+                if (dealer.team == 1){//If the dealer is from team 1 , give them a point
+                    team1Score ++;
+                }
+                else if (dealer.team == 2){//If dealer is from team2 , give them a point
+                    team2Score ++ ;
             if (team2Score ==1 || team1Score ==1){//Whoever reaches 10 points wins
                 for (var i in SOCKET_LIST) {
                     var socket = SOCKET_LIST [i];
