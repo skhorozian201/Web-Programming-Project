@@ -5,10 +5,7 @@
 			Game
 		</title>
 		<a>
-			<img id = "paladinRight" src = "img/Paladin.png" style = "width:10px; height:10px; display: none;" ></img>
-			<img id = "paladinLeft" src = "img/Paladin1.png" style = "width:10px; height:10px; display: none;" ></img>
-			<img id = "paladinDeadRight" src = "img/PaladinDeath.png" style = "width:10px; height:10px; display: none;" ></img>
-			<img id = "paladinDeadLeft" src = "img/PaladinDeath1.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "playerImageAnchor" src = "img/Paladin.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "hammerImageAnchor" src = "img/Hammer.png" style = "width:10px; height:10px; display: none;" ></img>
 		</a>
 		
@@ -17,21 +14,12 @@
 	<div id="loginDiv">
 		Username: <input id="loginUsername" type="text"></input><br>
 		Password: <input id="loginPassword" type="text"></input>
-		<p>
-				Pick a class:
-		</p>
-		<select id = "classPicker">
-				<option value="paladin">Paladin</option>
-				<option value="mage">Mage</option>
-				<option value="archer">Archer</option>
-				<option value="rogue">Rogue</option>
-		</select>
 		<button id="loginButton">Login</button>
 		<button id="signupButton">Sign Up</button>
 	</div>
 
 	<div id="gameDiv">
-		<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000" ></canvas>
+		<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000"></canvas>
 	</div>
 
 
@@ -42,8 +30,7 @@
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
 		
-		var playerImage = [document.getElementById("paladinRight"), document.getElementById("paladinLeft"), document.getElementById("paladinDeadRight"), document.getElementById("paladinDeadLeft")]; //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
-		
+		var playerImage = document.getElementById("playerImageAnchor"); //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
 		var hammerImage = document.getElementById ("hammerImageAnchor");
 
 		var loginNameElement = document.getElementById ("loginUsername");
@@ -52,16 +39,11 @@
 		var loginButton = document.getElementById ("loginButton");
 		var signUpButton = document.getElementById ("signupButton");
 
-		var classPicker = document.getElementById ("classPicker");
-
 		var connected = false;
 
 		loginButton.onclick = function () {
-			socket.emit ("login",{username: loginNameElement.value, password: loginPasswordElement.value, class: classPicker.value});
-		};
-
-		signUpButton.onclick = function () {
-			socket.emit ("signup",{username: loginNameElement.value, password: loginPasswordElement.value, class: classPicker.value});
+			socket.emit ("login",{username: loginNameElement.value, password: loginPasswordElement.value});
+			console.log ("clicc");
 		};
 
 		var localPlayerID;
@@ -75,9 +57,6 @@
 					signUpButton.disabled = true;
 					loginNameElement.disabled = true;
 					loginPasswordElement.disabled = true;
-					classPicker.disabled = true;
-				} else {
-
 				}
 		});
 
@@ -112,18 +91,7 @@
 					ctx.fillStyle = "#00FF00" ;
 					ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
 
-					if (!player.isRight) {
-						if (!player.isdead)
-							ctx.drawImage ( playerImage[1], player.x - 120, player.y - 80, 160, 160);
-						else 
-							ctx.drawImage ( playerImage[3], player.x - 80, player.y - 80, 160, 160);
-					} else {
-						if (!player.isdead)
-							ctx.drawImage ( playerImage[0], player.x - 80, player.y - 80, 160, 160);
-						else
-							ctx.drawImage ( playerImage[2], player.x - 80, player.y - 80, 160, 160);
-					}
-
+					ctx.drawImage ( playerImage, player.x - 80, player.y - 80, 160, 160);
 				}
 
 				for (var i = 0; i < data.projectileDataPack.length; i++)
@@ -133,6 +101,40 @@
 				}
 			}
 
+		});
+		socket.on ('gameOver',function(path){
+			console.log("game over")
+			document.writeln("<h1 style =text-align:center;height:5em;>Game over</h1>")
+			if (path.team1Score > path.team2Score){
+				if(path.player.team == 1){
+					document.writeln("<h1 style = text-align:center;color:blue;>Team 1 Wins </h1>")
+					document.writeln("<h2 style = text-align:center;color:green;>Congratulations Your Team Won!!!<h2>")
+					document.writeln("<h3 style = text-align:center;>Your Team Total Kills : "+ path.team1Score +"</h3>")
+					console.log("Team1 Wins")
+				}
+				else if (path.player.team == 2){
+					document.writeln("<h1 style =text-align:center;color:blue;>Team 1 Wins </h1>")
+					document.writeln("<h2 style =text-align:center;color:red;>Oppss Your team lost !!!</h2>")
+					document.writeln("<h3 style =text-align:center;>Your Team Total Kills : "+ path.team2Score +"</h3>")
+					console.log("Team1 Wins")
+				}
+			}
+			else {
+				if(path.player.team == 1){
+					document.writeln("<h1 style =text-align:center;color:blue;>Team 2 Wins</h1>")
+					document.writeln("<h2 style =text-align:center;color:red;>Opps Your Team Lost!!!</h2>")
+					document.writeln("<h3 style =text-align:center;>Your Team Total Kills : "+ path.team1Score +"</h3>")
+					console.log("Team2 Wins")
+				}
+				else if (path.player.team == 2){
+					document.writeln("<h1 style =text-align:center;color:blue;>Team 2 Wins</h1>")
+					document.writeln("<h2 style =text-align:center;color:green;>Congratulations Your Team Won!!!</h2>")
+					document.writeln("<h3 style =text-align:center;>Your Team Total Kills : "+ path.team2Score +"</h3>")
+					console.log("Team2 Wins")
+				}
+			}
+			document.writeln("<h3 style =text-align:center;>Your Total Kills : "+ path.player.kills +"</h3>")
+			socket.disconnect();
 		});
 
 		var moveDirs = [false, false, false, false]; //Movement input directions
@@ -257,14 +259,7 @@
 		document.onmouseup = clickLifted;
 		document.onmousedown = attackDown;
 		document.onmousemove = mousePosition;
-		socket.on("GameOver",function(pack){
-			if(pack.team2Score > pack.team1Score){
-				document.write("Game Over  Team 2 Wins")
-			}
-			else {
-				document.write("Game Over  Team 1 Wins")
-			}
-		)}
+		
 	</script>
 
 </html>
