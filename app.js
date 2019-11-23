@@ -9,6 +9,7 @@ app.get ('/', function (req, res) {
     res.sendFile (__dirname + '/client/index.html');
 });
 
+
 app.use (express.static('client')); //Allows for access of static files from within the "client" folder
 
 serv.listen (2000); //listens to port :2000
@@ -296,10 +297,8 @@ class Player {
                     team1Score ++;
                 }
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
-                    team2Score ++ ;
-            
+                    team2Score ++ ;            
                 this.Death ();//Call death function on current player
-                
             }
         }
         else {
@@ -472,6 +471,33 @@ var team2Score = 0 //Holds the kills of team 2
 io.sockets.on ('connection', function (socket){
     
     console.log ('socket connection');
+
+    socket.on("signup",function(data){
+        MongoClient.connect(dburl, function(err, db) {
+            if (err) throw err;
+            var database = db.db("mydb");
+
+            //after connecting check the login credentials
+            database.collection("users").findOne({}, function(err, result) {
+                if (err) throw err;
+                
+                if (result.username == data.username ) {
+                    SendResult (false); 
+                    console.log("Username ALready Taken")
+                }
+                else{
+                    database.collection("users").insertOne(data, function(err, res) {
+                        if (err) throw err;
+                        console.log(data.username + " Signed UP");
+                        SendResult(true)
+                        CreatePlayer(data)
+                        db.close();
+                        });
+                }
+            });
+        });
+    });
+
     
     socket.on ("login", function (data){
 
@@ -495,13 +521,13 @@ io.sockets.on ('connection', function (socket){
         });
     });
 
-    socket.on ("signup", function (data){ //Create a new account if username isn't already taken
-        MongoClient.connect(dburl, function(err, db) {
-            if (err) throw err;
-            var database = db.db("mydb");
+    // socket.on ("signup", function (data){ //Create a new account if username isn't already taken
+    //     MongoClient.connect(dburl, function(err, db) {
+    //         if (err) throw err;
+    //         var database = db.db("mydb");
 
-        });
-    });
+    //     });
+    // });
 
     function CreatePlayer (data) {
         console.log ("Created player");
