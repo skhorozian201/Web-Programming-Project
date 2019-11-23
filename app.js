@@ -2,14 +2,23 @@ var express = require ('express');
 var app = express ();
 var serv = require ('http').Server (app);
 
+var MongoClient = require('mongodb').MongoClient;
+var dburl = "mongodb://localhost:27017/mydb";
+
 app.get ('/', function (req, res) {
     res.sendFile (__dirname + '/client/index.html');
 });
+
 app.use (express.static('client')); //Allows for access of static files from within the "client" folder
 
 serv.listen (2000); //listens to port :2000
 
 console.log ("Server Initialized");
+  
+var baseUserLogin = {
+    username: 'username',
+    password: 'password'
+};
 
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
@@ -41,12 +50,49 @@ class Projectile {
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
             this.owner.DealDamage (25, hit);
-            this.DestroyThis (i);
         }
     }
 
     DestroyThis (i) { //This destroys the projectile.
         PROJECTILE_LIST.splice (i, 1);
+    }
+}
+
+class PaladinPrimary extends Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
+        super (x_init, y_init, angle, radius, speed, owner, lifetime);
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        if (hit.team != this.owner.team){
+            this.owner.DealDamage (20, hit);
+        }
+    }
+}
+
+class PaladinSecondary extends Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
+        super (x_init, y_init, angle, radius, speed, owner, lifetime);
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        if (hit.team != this.owner.team){
+            this.owner.DealDamage (20, hit);
+            this.DestroyThis (i);
+        }
+    }
+}
+
+class PaladinShockWave extends Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
+        super (x_init, y_init, angle, radius, speed, owner, lifetime);
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        if (hit.team != this.owner.team){
+            this.owner.DealDamage (30, hit);
+            hit.TakeStun (37);
+        }
     }
 }
 
@@ -97,7 +143,6 @@ class PaladinDash extends Spell {
 
     SpellCast (caster) {
         var angle = Math.atan2 (caster.mousePositionY-caster.y_position,caster.mousePositionX-caster.x_position);
-        console.log (angle);
         this.x_velo = (Math.cos(angle));
         this.y_velo = (Math.sin(angle));
         this.framesLeft = 10;
@@ -109,6 +154,11 @@ class PaladinDash extends Spell {
         if (caster.spell2.framesLeft > 0) {
             caster.x_position += caster.spell2.x_velo * 20;
             caster.y_position += caster.spell2.y_velo * 20;
+            if (caster.spell2.framesLeft == 1) {
+                var shockWave = new PaladinShockWave (caster.x_position, caster.y_position, 0, 75, 0, caster, 0);
+
+                PROJECTILE_LIST.push (shockWave);
+            }
             caster.spell2.framesLeft--;
         }
     }
@@ -117,13 +167,12 @@ class PaladinDash extends Spell {
 
 //Player Class
 class Player {
-   
 
-    constructor (id, name,team,kills) {
+    constructor (id, name,team) {
         this.id = id; //Player ID
         this.name = name; //Player Name
         this.team = team; //Player team
-        this.kills = kills;//PLayer total kills
+        this.kills = 0;//PLayer total kills. Start from 0
 
         if ( this.team == 2 ){
             this.x_position = 95; //Player position on the x-axis
@@ -133,7 +182,7 @@ class Player {
             this.y_position = 435; //Player position on the y-axis
         }
 
-        this.radius = 60;
+        this.radius = 60; //hitbox radius
 
         this.maxHealth = 150; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
@@ -151,7 +200,9 @@ class Player {
         this.mousePositionX = 0; //This is the y - coordinate for the current mouse positon.
         this.mousePositionY = 0; //This is the x - coordinate for the current mouse positon.
 
-        this.actionTimer = 0;
+        this.actionTimer = 0; //This is how long the player is preforming an actions for.
+
+        this.stunTimer = 0; //This is how long the player is disallowed to act.
 
         //List of Functions:
 
@@ -171,9 +222,9 @@ class Player {
 
         
         //Class Spells
-        this.spell1 = new PaladinHeal (); //Construct spells for the player
-        this.spell2 = new PaladinDash ();
-        this.spell3 = new PaladinHeal ();
+        this.spell1 = new Spell (); //Construct spells for the player
+        this.spell2 = new Spell (); 
+        this.spell3 = new Spell ();
 
         this.spell1.SpellOnInitialization (this); //Calls their initialization function
         this.spell2.SpellOnInitialization (this);
@@ -186,7 +237,7 @@ class Player {
     }
 
     PrimaryAttackFunc () {
-        if (this.actionTimer <= 0) { //temporary attack function
+        if (this.actionTimer <= 0 && this.stunTimer <= 0) { //temporary attack function
             this.actionTimer = 15;
 
             var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 0, this, 15);
@@ -196,7 +247,7 @@ class Player {
     }
 
     SecondaryAttackFunc () {
-        if (this.actionTimer <= 0) { //temporary attack function
+        if (this.actionTimer <= 0 && this.stunTimer <= 0) { //temporary attack function
             this.actionTimer = 15;
 
             var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
@@ -208,13 +259,13 @@ class Player {
 
     CastSpell (spellNumb) {
         if (spellNumb == 0) {
-            if (this.spell1.spellCooldown <= 0 && this.actionTimer <= 0)
+            if (this.spell1.spellCooldown <= 0 && this.actionTimer <= 0 && this.stunTimer <= 0)
                 this.spell1.SpellCast (this);
         } else if (spellNumb == 1) {
-            if (this.spell2.spellCooldown <= 0 && this.actionTimer <= 0)
+            if (this.spell2.spellCooldown <= 0 && this.actionTimer <= 0 && this.stunTimer <= 0)
                 this.spell2.SpellCast (this);
         } else if (spellNumb == 2) {
-            if (this.spell3.spellCooldown <= 0 && this.actionTimer <= 0)
+            if (this.spell3.spellCooldown <= 0 && this.actionTimer <= 0 && this.stunTimer <= 0)
                 this.spell3.SpellCast (this);
         }
     }
@@ -229,24 +280,19 @@ class Player {
             if (this.currentHealth <= 0) { //If the player's current health drops to 0
                 this.currentHealth = 0; //Current health never drops below 0
                 dealer.kills ++; //Give the dealer a kill
-                if (dealer.team == 1){//If the dealer is from team 1 , give them a point
-                    team1Score ++;
+                
+            if (team2Score ==1 || team1Score ==1){//Whoever reaches 10 points wins
+                for (var i in SOCKET_LIST) {
+                    var socket = SOCKET_LIST [i];
+                    var player = PLAYER_LIST[i]
+                    var pack = {team1,team1Score,team2,team2Score,player}
+                    socket.emit('gameOver',pack)//Catch that on html side and end the game
+                    console.log("GameOver")
                 }
-                else if (dealer.team == 2){//If dealer is from team2 , give them a point
-                    team2Score ++ ;
-                }
-                if (team2Score ==1 || team1Score ==1){//Whoever reaches 10 points wins
-                    for (var i in SOCKET_LIST) {
-                        var socket = SOCKET_LIST [i];
-                        var player = PLAYER_LIST[i]
-                        var pack = {team1,team1Score,team2,team2Score,player}
-                        socket.emit('gameOver',pack)//Catch that on html side and end the game
-                        console.log("GameOver")
-                    }
-                    io.sockets.server.close();//Closes the game.
-                }
-                else {
-                this.Death ();//Call death function on current player
+                io.sockets.server.close();//Closes the game.
+            }
+            else {
+            this.Death ();//Call death function on current player
                 }
             }
         }
@@ -258,6 +304,8 @@ class Player {
         return damage; //Return the damage incase it changes... somehow...
     }
 
+   
+    
 
     //Called to restore current health to this player
     //heal is the number
@@ -289,6 +337,12 @@ class Player {
         receiver.TakeHeal (heal, this);
     }
 
+    TakeStun (duration) {
+        if (this.stunTimer < duration) {
+            this.stunTimer = duration;
+        }
+    }
+
 
     //Called when the player drops to 0 current health
     Death () {
@@ -315,11 +369,73 @@ class Player {
                 }
 
                 player.currentHealth = player.maxHealth;
-            }, 100, this);
+            }, 5000, this);
         
     }
 
 }
+
+//Paladin Player Subclass
+class Paladin extends Player {
+    constructor (id, name,team) {
+        super (id, name, team);
+        
+        this.spell1 = new PaladinHeal ();
+        this.spell2 = new PaladinDash ();
+        this.spell3 = new Spell ();
+
+        this.spell1.SpellOnInitialization (this); //Calls their initialization function
+        this.spell2.SpellOnInitialization (this);
+        this.spell3.SpellOnInitialization (this);
+    }
+
+    PrimaryAttackFunc () {
+        if (this.actionTimer <= 0) { //temporary attack function
+            this.actionTimer = 15;
+
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+
+            var range_x = 100 * Math.cos (angle);
+            var range_y = 100 * Math.sin (angle);
+
+            var attackProjectile = new Projectile (this.x_position + range_x, this.y_position + range_y, 0, 60, 0, this, 0);
+
+            PROJECTILE_LIST.push (attackProjectile);
+        }
+    }
+
+    SecondaryAttackFunc () {
+        if (this.actionTimer <= 0) { //temporary attack function
+            this.actionTimer = 15;
+
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+            var attackProjectile = new PaladinSecondary (this.x_position, this.y_position, angle, 40, 30, this, 12);
+
+            PROJECTILE_LIST.push (attackProjectile);
+        }
+    }
+}
+
+class Mage extends Player {
+    constructor (id, name,team) {
+        super (id, name, team);
+    }
+}
+
+class Archer extends Player {
+    constructor (id, name,team) {
+        super (id, name, team);
+    }
+}
+
+class Rogue extends Player {
+    constructor (id, name,team) {
+        super (id, name, team);
+    }
+}
+
+
+
 //Use this function to get distance between two points
 function GetDistance (x1, y1, x2, y2) {
     var final_x = x2-x1; 
@@ -339,6 +455,38 @@ io.sockets.on ('connection', function (socket){
     console.log ('socket connection');
     
     socket.on ("login", function (data){
+
+        //on logging in try to connect to the database
+        MongoClient.connect(dburl, function(err, db) {
+            if (err) throw err;
+            var database = db.db("mydb");
+
+            //after connecting check the login credentials
+            database.collection("users").findOne({}, function(err, result) {
+                if (err) throw err;
+                
+                if (result.username == data.username && result.password == data.password) {
+                    SendResult (true); //if the login credentials are correct, create a player and send result to the client
+                    CreatePlayer (data);
+                } else {
+                    SendResult (false); //otherwise just send result to the client
+                }
+            });
+
+        });
+    });
+
+    socket.on ("signup", function (data){ //Create a new account if username isn't already taken
+        MongoClient.connect(dburl, function(err, db) {
+            if (err) throw err;
+            var database = db.db("mydb");
+
+        });
+    });
+
+    function CreatePlayer (data) {
+        console.log ("Created player");
+
         socket.id = Math.random (); //creates a random ID for the new connection
         SOCKET_LIST [socket.id] = socket; //adds the new socket to the list
         var current_team = 1 ;//Created a var for current team . it will have 2 values.
@@ -357,36 +505,48 @@ io.sockets.on ('connection', function (socket){
             team1 ++; 
         }
     
-
-        var player = new Player (socket.id, data.username, current_team, 0); //constructs a new Player instance
+        if (data.class == "paladin")
+            var player = new Paladin (socket.id, data.username, current_team); //constructs a new Player instance
+        else if (data.class == "mage")
+            console.log ("made mage");
+        else if (data.class == "archer")
+            console.log ("made archer");
+        else if (data.class == "rogue")
+            console.log ("made rogue");
+        
         PLAYER_LIST [socket.id] = player; //adds the new player to the list
+    }
 
-
+    function SendResult (loginSuccess) { //This sends the result of the login
         socket.emit ('sendResult', {
-            connected: true,
+            connected: loginSuccess,
             id: socket.id
-        });
-
-    });
+        }); 
+    }
 
     socket.on ('disconnect',function(){ //When a player disconnects from the game
         //Just to balance the teams , so next spawn is on the team with less players.
-        if (PLAYER_LIST[socket.id].team == 1){//If the player is from team 2 , minus 1 from team2
-            team1 --;
+        if (PLAYER_LIST[socket.id]){
+            if (PLAYER_LIST[socket.id].team == 1){//If the player is from team 2 , minus 1 from team2
+                team1 --;
+            }
+            else if (PLAYER_LIST[socket.id].team == 2){//If player is from team1 minus 1 from team 1
+                team2 --;
+            } 
+            delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
+            console.log (PLAYER_LIST[socket.id].name + ' disconnected');
+            delete PLAYER_LIST[socket.id];
         }
-        else if (PLAYER_LIST[socket.id].team == 2){//If player is from team1 minus 1 from team 1
-            team2 --;
-        } 
-        delete SOCKET_LIST [socket.id]; //remove them from the player and the socket list
-        delete PLAYER_LIST[socket.id];
-        console.log ('socket disconnect');
+        else {
+            console.log ('socket disconnected');
+        }
     });
 
-    socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client
+    socket.on ('sendMoveDirs',function (data) { //This is receive the data of the players movement input from the client  
         PLAYER_LIST [socket.id].moveUpInput = data.moveDirections[0],
         PLAYER_LIST [socket.id].moveDownInput = data.moveDirections[1],
         PLAYER_LIST [socket.id].moveRightInput = data.moveDirections[2],
-        PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3]
+        PLAYER_LIST [socket.id].moveLeftInput = data.moveDirections[3];
     });
     socket.on ('sendAttackInput',function (data) { //This is to receive the data of the players attack choice input from the client
         PLAYER_LIST [socket.id].primaryAttack = data.primary,
@@ -396,8 +556,10 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id].name = data.name;
     });
     socket.on('sendMousePosition', function (data) { //This is to recieve the data of the player's mouse positon.
-        PLAYER_LIST [socket.id].mousePositionX = data.x;
-        PLAYER_LIST [socket.id].mousePositionY = data.y;
+        if (!PLAYER_LIST [socket.id].isDead){
+            PLAYER_LIST [socket.id].mousePositionX = data.x;
+            PLAYER_LIST [socket.id].mousePositionY = data.y;
+        }
     });
     socket.on ('sendSpellInput', function (data) { //This is to receive the player spell cast input.
         PLAYER_LIST [socket.id].CastSpell (data.spellNumber);
@@ -416,7 +578,7 @@ setInterval (function () {
     for (var i in PLAYER_LIST) {
         var player = PLAYER_LIST [i];
 
-        if (!player.isDead && player.actionTimer <= 0) {
+        if (!player.isDead && player.actionTimer <= 0 && player.stunTimer <= 0) {
             //This move the player based on the input
             if (player.moveUpInput) {
                 player.x_position += player.moveSpeed;
@@ -444,6 +606,10 @@ setInterval (function () {
             player.actionTimer--;
         }
 
+        if (player.stunTimer > 0) {
+            player.stunTimer--;
+        }
+
         if (player.spell1.spellCooldown > 0) {
             player.spell1.spellCooldown--;
         }
@@ -459,6 +625,8 @@ setInterval (function () {
             func (player);
         }
 
+        var isFacingRight = player.mousePositionX - player.x_position >= 0;
+
         //This adds the new position data to the list
         playerDataPack.push ({
             x: player.x_position,
@@ -467,7 +635,9 @@ setInterval (function () {
             team: player.team,
             maxHealth: player.maxHealth,
             currentHealth: player.currentHealth,
-            id: player.id
+            id: player.id,
+            isdead: player.isDead,
+            isRight: isFacingRight
         });
         
     }
