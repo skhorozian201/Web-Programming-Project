@@ -96,6 +96,19 @@ class PaladinShockWave extends Projectile {
     }
 }
 
+class MageSecondary extends Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
+        super (x_init, y_init, angle, radius, speed, owner, lifetime);
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        if (hit.team != this.owner.team){
+            this.owner.DealDamage (25, hit);
+            this.DestroyThis (i);
+        }
+    }
+}
+
 class Spell { //Spell abstract class
     constructor () {
         this.spellCooldown = 0;//spell cooldown
@@ -162,7 +175,6 @@ class PaladinDash extends Spell {
             caster.spell2.framesLeft--;
         }
     }
-
 }
 
 //Player Class
@@ -184,7 +196,7 @@ class Player {
 
         this.radius = 60; //hitbox radius
 
-        this.maxHealth = 150; //Player maximum health
+        this.maxHealth = 250; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
 
         this.moveSpeed = 5; //Player movement speed
@@ -384,6 +396,9 @@ class Paladin extends Player {
     constructor (id, name,team) {
         super (id, name, team);
         
+        this.maxHealth = 250; //Player maximum health
+        this.currentHealth = this.maxHealth; //Player CURRENT health
+
         this.spell1 = new PaladinHeal ();
         this.spell2 = new PaladinDash ();
         this.spell3 = new Spell ();
@@ -423,6 +438,8 @@ class Paladin extends Player {
 class Mage extends Player {
     constructor (id, name,team) {
         super (id, name, team);
+        this.maxHealth = 175; //Player maximum health
+        this.currentHealth = this.maxHealth; //Player CURRENT health
     }
 }
 
@@ -437,8 +454,6 @@ class Rogue extends Player {
         super (id, name, team);
     }
 }
-
-
 
 //Use this function to get distance between two points
 function GetDistance (x1, y1, x2, y2) {
