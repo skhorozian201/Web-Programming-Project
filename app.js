@@ -285,14 +285,27 @@ class Player {
                     team1Score ++;
                 }
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
-                    team2Score ++ ;            
-                this.Death ();//Call death function on current player
+                    team2Score ++ ;
+                }
+            if (team2Score ==1 || team1Score ==1){//Whoever reaches 10 points wins
+                for (var i in SOCKET_LIST) {
+                    var socket = SOCKET_LIST [i];
+                    var player = PLAYER_LIST[i]
+                    var pack = {team1,team1Score,team2,team2Score,player}
+                    socket.emit('gameOver',pack)//Catch that on html side and end the game
+                }
+                console.log("GameOver")
+                io.sockets.server.close();//Closes the game.
+            }
+            else {
+            this.Death ();//Call death function on current player
+                }
             }
         }
         else {
             damage = 0;
         }
-    }
+
 
         return damage; //Return the damage incase it changes... somehow...
     }
@@ -343,16 +356,6 @@ class Player {
         this.isDead = true;//Keep them //dead for 5 seconds
         this.isUntargetable = true;//Cant hit them
         console.log (this.name + " died.");       
-        if (team2Score == 2 || team1Score == 2){//Whoever reaches 10 points wins
-            for (var i in SOCKET_LIST) {
-                var socket = SOCKET_LIST [i];
-                var player = PLAYER_LIST[i]
-                var pack = {team1,team1Score,team2,team2Score,player}
-                socket.emit('gameOver',pack)//Catch that on html side and end the game
-                console.log("GameOver")
-            }
-            io.sockets.server.close();//Closes the game.
-        }
         this.Respawn ();
     }
 
