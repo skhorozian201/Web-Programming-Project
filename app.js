@@ -509,14 +509,6 @@ io.sockets.on ('connection', function (socket){
         });
     });
 
-    // socket.on ("signup", function (data){ //Create a new account if username isn't already taken
-    //     MongoClient.connect(dburl, function(err, db) {
-    //         if (err) throw err;
-    //         var database = db.db("mydb");
-
-    //     });
-    // });
-
     function CreatePlayer (data) {
         console.log ("Created player");
 
