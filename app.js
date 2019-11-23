@@ -468,18 +468,23 @@ io.sockets.on ('connection', function (socket){
             //after connecting check the login credentials
             database.collection("users").findOne({}, function(err, result) {
                 if (err) throw err;
-                
-                if (result.username == data.username ) {
-                    SendResult (false); 
-                    console.log("Username ALready Taken")
-                }
-                else{
+                var found = false                 
+                for (x in result) {
+                    ress = result[x]                    
+                    if (ress.username == data.username  ) {
+                        SendResult (false); 
+                        console.log("Username ALready Taken")
+                        found = true
+                        break
+                    } 
+                };
+                if(!found){
                     database.collection("users").insertOne(data, function(err, res) {
                         if (err) throw err;
                         console.log(data.username + " Signed UP");
                         SendResult(true)
                         CreatePlayer(data)
-                        db.close();
+                        db.close()
                         });
                 }
             });
@@ -495,13 +500,21 @@ io.sockets.on ('connection', function (socket){
             var database = db.db("mydb");
 
             //after connecting check the login credentials
-            database.collection("users").findOne({}, function(err, result) {
+            database.collection("users").find({}).toArray(function(err, result) {
                 if (err) throw err;
-                
-                if (result.username == data.username && result.password == data.password) {
-                    SendResult (true); //if the login credentials are correct, create a player and send result to the client
-                    CreatePlayer (data);
-                } else {
+                console.log(result)
+                var found = false                 
+                for (x in result) {
+                    ress = result[x]                    
+                    if (ress.username == data.username && ress.password == data.password) {
+                        SendResult (true); //if the login credentials are correct, create a player and send result to the client
+                        CreatePlayer(ress)
+                        found = true
+                        break
+                    } 
+                };
+                if(!found){
+                    console.log("Cant find Username")
                     SendResult (false); //otherwise just send result to the client
                 }
             });
