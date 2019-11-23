@@ -134,6 +134,41 @@
 			}
 
 		});
+		//For game over.
+		socket.on ('gameOver',function(path){
+			console.log("game over")
+			document.writeln("<h1 style =text-align:center;height:5em;>Game over</h1>")
+			if (path.team1Score > path.team2Score){
+				if(path.player.team == 1){
+					document.writeln("<h1 style = text-align:center;color:blue;>Team 1 Wins </h1>")
+					document.writeln("<h2 style = text-align:center;color:green;>Congratulations Your Team Won!!!<h2>")
+					document.writeln("<h3 style = text-align:center;>Your Team Total Kills : "+ path.team1Score +"</h3>")
+					console.log("Team1 Wins")
+				}
+				else if (path.player.team == 2){
+					document.writeln("<h1 style =text-align:center;color:blue;>Team 1 Wins </h1>")
+					document.writeln("<h2 style =text-align:center;color:red;>Oppss Your team lost !!!</h2>")
+					document.writeln("<h3 style =text-align:center;>Your Team Total Kills : "+ path.team2Score +"</h3>")
+					console.log("Team1 Wins")
+				}
+			}
+			else {
+				if(path.player.team == 1){
+					document.writeln("<h1 style =text-align:center;color:blue;>Team 2 Wins</h1>")
+					document.writeln("<h2 style =text-align:center;color:red;>Opps Your Team Lost!!!</h2>")
+					document.writeln("<h3 style =text-align:center;>Your Team Total Kills : "+ path.team1Score +"</h3>")
+					console.log("Team2 Wins")
+				}
+				else if (path.player.team == 2){
+					document.writeln("<h1 style =text-align:center;color:blue;>Team 2 Wins</h1>")
+					document.writeln("<h2 style =text-align:center;color:green;>Congratulations Your Team Won!!!</h2>")
+					document.writeln("<h3 style =text-align:center;>Your Team Total Kills : "+ path.team2Score +"</h3>")
+					console.log("Team2 Wins")
+				}
+			}
+			document.writeln("<h3 style =text-align:center;>Your Total Kills : "+ path.player.kills +"</h3>")
+			socket.disconnect();
+		});
 
 		var moveDirs = [false, false, false, false]; //Movement input directions
 

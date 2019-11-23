@@ -175,11 +175,11 @@ class Player {
         this.kills = 0;//PLayer total kills. Start from 0
 
         if ( this.team == 2 ){
-            this.x_position = 50; //Player position on the x-axis
-            this.y_position = 50; //Player position on the y-axis
+            this.x_position = 95; //Player position on the x-axis
+            this.y_position = 130; //Player position on the y-axis
         } else {
-            this.x_position = 780; //Player position on the x-axis
-            this.y_position = 320; //Player position on the y-axis
+            this.x_position = 880; //Player position on the x-axis
+            this.y_position = 435; //Player position on the y-axis
         }
 
         this.radius = 60; //hitbox radius
@@ -280,17 +280,19 @@ class Player {
             if (this.currentHealth <= 0) { //If the player's current health drops to 0
                 this.currentHealth = 0; //Current health never drops below 0
                 dealer.kills ++; //Give the dealer a kill
-                if (dealer.team == 1){//If the dealer is from team 1 , give them a point
-                    team1Score ++;
+                
+            if (team2Score ==1 || team1Score ==1){//Whoever reaches 10 points wins
+                for (var i in SOCKET_LIST) {
+                    var socket = SOCKET_LIST [i];
+                    var player = PLAYER_LIST[i]
+                    var pack = {team1,team1Score,team2,team2Score,player}
+                    socket.emit('gameOver',pack)//Catch that on html side and end the game
+                    console.log("GameOver")
                 }
-                else if (dealer.team == 2){//If dealer is from team2 , give them a point
-                    team2Score ++ ;
-                }
-                this.Death ();//Call death function on current player
-                if (team2Score ==2 || team1Score ==2){//Whoever reaches 10 points wins
-                    io.sockets.emit("disconnect")//Catch that on html side and end the game
-                    io.sockets.server.close();//Closes the game
-                    console.log ('socket disconnect');
+                io.sockets.server.close();//Closes the game.
+            }
+            else {
+            this.Death ();//Call death function on current player
                 }
             }
         }
@@ -358,12 +360,12 @@ class Player {
                 player.isDead = false;
                 player.isUntargetable = false
 
-                if ( player.team == 2 ){
-                    player.x_position = 50; //Player position on the x-axis
-                    player.y_position = 50; //Player position on the y-axis
+                if ( this.team == 2 ){
+                    this.x_position = 95; //Player position on the x-axis
+                    this.y_position = 130; //Player position on the y-axis
                 } else {
-                    player.x_position = 780; //Player position on the x-axis
-                    player.y_position = 320; //Player position on the y-axis
+                    this.x_position = 880; //Player position on the x-axis
+                    this.y_position = 435; //Player position on the y-axis
                 }
 
                 player.currentHealth = player.maxHealth;
