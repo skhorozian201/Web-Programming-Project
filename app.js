@@ -73,6 +73,7 @@ class Projectile {
         this.onCollisionEffect; //This function is called on collision with a player. (Player hit)
         this.onExpireEffect; //This function is called on expire. 
 
+        this.id = 0;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -89,6 +90,7 @@ class Projectile {
 class PaladinPrimary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 1;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -96,6 +98,8 @@ class PaladinPrimary extends Projectile {
             this.owner.DealDamage (20, hit);
         }
     }
+
+    
 }
 
 class PaladinSecondary extends Projectile {
@@ -114,6 +118,7 @@ class PaladinSecondary extends Projectile {
 class PaladinShockWave extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 2;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -127,6 +132,7 @@ class PaladinShockWave extends Projectile {
 class MageUltProjectile extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 5;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -140,6 +146,7 @@ class MageUltProjectile extends Projectile {
 class MagePrimary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 3;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -155,6 +162,7 @@ class MagePrimary extends Projectile {
 class MageSecondary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime, manaBuildUp) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 4;
         this.manaBuildUp = manaBuildUp;
     }
 
@@ -196,9 +204,10 @@ class PaladinHeal extends Spell {
         this.spellCooldown = 250;
 
         var effect = new FollowPlayerEffect (caster.x_position, caster.y_position, caster, 15, 0);
+        PARTICLE_EFFECT_LIST.push (effect);
 
         setTimeout ( function () {
-            caster.SendHeal (40,caster);
+            caster.SendHeal ((caster.maxHealth - caster.currentHealth) * 0.5,caster);
         }, 150);
     }
 }
@@ -268,7 +277,7 @@ class PaladinUlt extends Spell {
     DamageReflection (player, dealer, damage) {
 
         if (player.spell3.isActive){
-            player.DealDamage (damage * 0.33,dealer);
+            player.DealDamage (damage * 0.66,dealer);
         }
     }
 }
@@ -288,6 +297,10 @@ class MageBarrier extends Spell {
     SpellCast (caster) {
         this.spellCooldown = 250;
         this.isActive = true;
+
+        var effect = new FollowPlayerEffect (caster.x_position,caster.y_position,caster, 50, 3);
+        PARTICLE_EFFECT_LIST.push (effect);
+
         setTimeout(() => {
             this.isActive = false;
         }, 2000);
@@ -296,7 +309,6 @@ class MageBarrier extends Spell {
     Barrier (player, dealer, damage) {
 
         if (player.spell1.isActive){
-            player.spell1.isActive = false;
             player.SendHeal (damage * 2, player);
             player.manaBuildUp = 5;
         }
@@ -317,7 +329,8 @@ class MageTeleport extends Spell {
         caster.actionTimer = 15;
         var x_tele = caster.x_position - caster.mousePositionX;
         var y_tele = caster.y_position - caster.mousePositionY;
-        
+        this.spellCooldown = 125;
+
         if (x_tele > 500)
             x_tele = 500;
         else if (x_tele < -500)
@@ -332,7 +345,6 @@ class MageTeleport extends Spell {
         setTimeout ( function () {
             caster.x_position -= x_tele;
             caster.y_position -= y_tele;
-            this.spellCooldown = 125;
         }, 150);
     }
 }
@@ -349,12 +361,12 @@ class MageUlt extends Spell {
 
     SpellCast (caster) {
         caster.actionTimer = 50;
+        this.spellCooldown = 375;
 
         setTimeout ( function () {
             var projectile = new MageUltProjectile (caster.x_position, caster.y_position, 0, 450, 0, caster, 0);
 
             PROJECTILE_LIST.push (projectile);
-            this.spellCooldown = 2500;
         }, 500);
     }
 }
@@ -471,19 +483,8 @@ class Player {
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
                     team2Score ++ ;
                 }
-            if (team2Score ==1 || team1Score ==1){//Whoever reaches 10 points wins
-                for (var i in SOCKET_LIST) {
-                    var socket = SOCKET_LIST [i];
-                    var player = PLAYER_LIST[i]
-                    var pack = {team1,team1Score,team2,team2Score,player}
-                    socket.emit('gameOver',pack)//Catch that on html side and end the game
-                }
-                console.log("GameOver")
-                io.sockets.server.close();//Closes the game.
-            }
-            else {
             this.Death ();//Call death function on current player
-                }
+                
             }
 
             for (var i in this.onTakingDamageEvent) { //this calls on damage taken event
@@ -545,7 +546,18 @@ class Player {
         this.isImmune = true;//Kepp them immune for 5 seconds
         this.isDead = true;//Keep them //dead for 5 seconds
         this.isUntargetable = true;//Cant hit them
-        console.log (this.name + " died.");       
+        console.log (this.name + " died.");     
+
+        if (team2Score == team2*3 || team1Score == team1*3){//Whoever reaches 10 points wins
+            for (var i in SOCKET_LIST) {
+                var socket = SOCKET_LIST [i];
+                var player = PLAYER_LIST[i]
+                var pack = {team1,team1Score,team2,team2Score,player}
+                socket.emit('gameOver',pack)//Catch that on html side and end the game
+            }
+            console.log("GameOver")
+            io.sockets.server.close();//Closes the game.
+        }  
         this.Respawn ();
     }
 
@@ -556,12 +568,12 @@ class Player {
                 player.isDead = false;
                 player.isUntargetable = false
 
-                if ( this.team == 2 ){
-                    this.x_position = 95; //Player position on the x-axis
-                    this.y_position = 130; //Player position on the y-axis
+                if ( player.team == 2 ){
+                    player.x_position = 95; //Player position on the x-axis
+                    player.y_position = 130; //Player position on the y-axis
                 } else {
-                    this.x_position = 880; //Player position on the x-axis
-                    this.y_position = 435; //Player position on the y-axis
+                    player.x_position = 880; //Player position on the x-axis
+                    player.y_position = 435; //Player position on the y-axis
                 }
 
                 player.currentHealth = player.maxHealth;
@@ -578,7 +590,7 @@ class Paladin extends Player {
         
         this.class = "Paladin";
 
-        this.maxHealth = 250; //Player maximum health
+        this.maxHealth = 500; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
 
         this.spell1 = new PaladinHeal ();
@@ -624,7 +636,7 @@ class Mage extends Player {
         super (id, name, team);
 
         this.class = "Mage"
-        this.maxHealth = 175; //Player maximum health
+        this.maxHealth = 300; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
 
         this.spell1 = new MageBarrier ();
@@ -867,7 +879,7 @@ setInterval (function () {
     for (var i in PLAYER_LIST) {
         var player = PLAYER_LIST [i];
 
-        if (!player.isDead && player.actionTimer <= 0 && player.stunTimer <= 0) {
+        if (!player.isDead && player.stunTimer <= 0) {
             //This move the player based on the input
             if (player.moveUpInput) {
                 player.x_position += player.moveSpeed;
@@ -881,12 +893,13 @@ setInterval (function () {
                 player.y_position -= player.moveSpeed;            
             }
         
-
-            if (player.primaryAttack) {
-                player.PrimaryAttackFunc ();
-            }
-            if (player.secondaryAttack) {
-                player.SecondaryAttackFunc ();
+            if (player.actionTimer <= 0) {
+                if (player.primaryAttack) {
+                    player.PrimaryAttackFunc ();
+                }
+                if (player.secondaryAttack) {
+                    player.SecondaryAttackFunc ();
+                }
             }
 
         }
@@ -927,6 +940,9 @@ setInterval (function () {
             id: player.id,
             isdead: player.isDead,
             isRight: isFacingRight,
+            cd1: player.spell1.spellCooldown,
+            cd2: player.spell2.spellCooldown,
+            cd3: player.spell3.spellCooldown,
             class: player.class
         });
         
