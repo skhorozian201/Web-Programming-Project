@@ -29,7 +29,7 @@
 
 	<div id="loginDiv">
 		Username: <input id="loginUsername" type="text"></input><br>
-		Password: <input id="loginPassword" type="text"></input>
+		Password: <input id="loginPassword" type="password"></input>
 		<p>
 				Pick a class:
 		</p>
@@ -97,14 +97,21 @@
 				localPlayerID = data.id;
 				console.log (localPlayerID);
 				connected = data.connected;
+				usernameAvailable= data.username;//TO check if username is available.
 				if (connected) {
 					loginButton.disabled = true;
 					signUpButton.disabled = true;
 					loginNameElement.disabled = true;
 					loginPasswordElement.disabled = true;
 					classPicker.disabled = true;
-				} else {
-
+					document.getElementById("loginDiv").innerHTML = "<h2>Welcome " + (data.player.name).toUpperCase() +"<span style = float:right;> Your Team : " +data.player.team+"</span></h2>";
+				} 
+				else if (!usernameAvailable){
+					window.alert("     Username Already Taken\n          Try Again");
+				}
+				else {
+					window.alert("     Wrong Username or Password\n          Try Again\n     If you are new SIGN UP");
+				
 				}
 		});
 
