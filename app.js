@@ -97,14 +97,30 @@ class PaladinShockWave extends Projectile {
     }
 }
 
-class MageSecondary extends Projectile {
+class MagePrimary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
-            this.owner.DealDamage (25, hit);
+            this.owner.DealDamage (10, hit);
+            if (this.owner.currentManaBuildUp < 5)
+                this.owner.currentManaBuildUp += 1;
+            this.DestroyThis (i);
+        }
+    }
+}
+
+class MageSecondary extends Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime, manaBuildUp) {
+        super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.manaBuildUp = manaBuildUp;
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        if (hit.team != this.owner.team){
+            this.owner.DealDamage (10 + (10 * manaBuildUp), hit);
             this.DestroyThis (i);
         }
     }
@@ -137,8 +153,11 @@ class PaladinHeal extends Spell {
 
     SpellCast (caster) {
         caster.actionTimer = 15;
-        caster.SendHeal (40,caster);
-        this.spellCooldown = 200;
+
+        setTimeout ( function () {
+            caster.SendHeal (40,caster);
+            this.spellCooldown = 200;
+        }, 150);
     }
 }
 
@@ -178,6 +197,33 @@ class PaladinDash extends Spell {
     }
 }
 
+class PaladinUlt extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+
+        this.isActive = false;
+    }
+
+    SpellOnInitialization (caster) {
+        
+    }
+
+    SpellCast (caster) {
+        this.spellCooldown = 500;
+        this.isActive = true;
+        setTimeout(() => {
+            this.isActive = false;
+        }, 5000);
+    }
+
+    DamageReduction (player, dealer, damage) {
+        if (this.isActive){
+            player.DealDamage (damage * 0.33,dealer);
+        }
+    }
+}
+
 //Player Class
 class Player {
 
@@ -194,6 +240,8 @@ class Player {
             this.x_position = 880; //Player position on the x-axis
             this.y_position = 435; //Player position on the y-axis
         }
+
+        this.class = "None";
 
         this.radius = 60; //hitbox radius
 
@@ -251,22 +299,11 @@ class Player {
 
     PrimaryAttackFunc () {
         if (this.actionTimer <= 0 && this.stunTimer <= 0) { //temporary attack function
-            this.actionTimer = 15;
-
-            var attackProjectile = new Projectile (this.x_position, this.y_position, 0, 40, 0, this, 15);
-
-            PROJECTILE_LIST.push (attackProjectile);
         }
     }
 
     SecondaryAttackFunc () {
         if (this.actionTimer <= 0 && this.stunTimer <= 0) { //temporary attack function
-            this.actionTimer = 15;
-
-            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
-            var attackProjectile = new Projectile (this.x_position, this.y_position, angle, 40, 30, this, 12);
-
-            PROJECTILE_LIST.push (attackProjectile);
         }
     }
 
@@ -299,6 +336,12 @@ class Player {
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
                     team2Score ++ ;            
                 this.Death ();//Call death function on current player
+            }
+
+            for (var i in this.onDealingDamageEvent) { //this calls on damage taken event
+                func = this.onDealingDamageEvent [i];
+
+                func (this, dealer, damage)
             }
         }
         else {
@@ -395,12 +438,14 @@ class Paladin extends Player {
     constructor (id, name,team) {
         super (id, name, team);
         
+        this.class = "Paladin";
+
         this.maxHealth = 250; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
 
         this.spell1 = new PaladinHeal ();
         this.spell2 = new PaladinDash ();
-        this.spell3 = new Spell ();
+        this.spell3 = new PaladinUlt ();
 
         this.spell1.SpellOnInitialization (this); //Calls their initialization function
         this.spell2.SpellOnInitialization (this);
@@ -410,26 +455,27 @@ class Paladin extends Player {
     PrimaryAttackFunc () {
         if (this.actionTimer <= 0) { //temporary attack function
             this.actionTimer = 15;
+            setTimeout ( function () {
+                var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
 
-            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
-
-            var range_x = 100 * Math.cos (angle);
-            var range_y = 100 * Math.sin (angle);
-
-            var attackProjectile = new Projectile (this.x_position + range_x, this.y_position + range_y, 0, 60, 0, this, 0);
-
-            PROJECTILE_LIST.push (attackProjectile);
+                var range_x = 100 * Math.cos (angle);
+                var range_y = 100 * Math.sin (angle);
+                var attackProjectile = new PaladinPrimary (this.x_position + range_x, this.y_position + range_y, 0, 60, 0, this, 0);
+                PROJECTILE_LIST.push (attackProjectile);
+            }, 150);
         }
     }
 
     SecondaryAttackFunc () {
         if (this.actionTimer <= 0) { //temporary attack function
-            this.actionTimer = 15;
+            this.actionTimer = 25;
 
+            setTimeout ( function () {
             var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
             var attackProjectile = new PaladinSecondary (this.x_position, this.y_position, angle, 40, 30, this, 12);
 
             PROJECTILE_LIST.push (attackProjectile);
+            }, 250);
         }
     }
 }
@@ -437,8 +483,39 @@ class Paladin extends Player {
 class Mage extends Player {
     constructor (id, name,team) {
         super (id, name, team);
+
+        this.class = "Mage"
         this.maxHealth = 175; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
+
+        this.currentManaBuildUp = 0;
+    }
+
+    PrimaryAttackFunc () {
+        if (this.actionTimer <= 0) { //temporary attack function
+            this.actionTimer = 10;
+
+            setTimeout (function () {
+                var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+                var attackProjectile = new MagePrimary (this.x_position, this.y_position, angle, 25, 20, this, 10);
+    
+                PROJECTILE_LIST.push (attackProjectile);
+            },10);
+        }
+    }
+
+    PrimaryAttackFunc () {
+        if (this.actionTimer <= 0) { //temporary attack function
+            this.actionTimer = 15;
+
+            setTimeout (function () {
+                var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+                var attackProjectile = new MageSecondary (this.x_position, this.y_position, angle, 10 + 10 * this.manaBuildUp, 10 + 8 * this.manaBuildUp, this, 15, this.manaBuildUp);
+                this.manaBuildUp = 0;
+
+                PROJECTILE_LIST.push (attackProjectile);
+            },10);
+        }
     }
 }
 
