@@ -55,11 +55,14 @@
 				<option value="paladin">Paladin</option>
 				<option value="mage">Mage</option>
 				<option value="archer">Archer</option>
-		</select>
-		<button id="loginButton">Login</button>
-		<button id="signupButton">Sign Up</button>
-	</div>
-
+			</select>
+			<button id="loginButton">Login</button>
+			<button id="signupButton">Sign Up</button>
+		</div>
+		
+	<body>
+			<p id ="rightSideText"style='float: right; width: 10em; margin-top:5em';></p>
+	</body>
 	<div id="gameDiv">
 		<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000" ></canvas>
 	</div>
@@ -196,6 +199,7 @@
 					ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
 					
 					if (player.class == "Paladin") {
+						document.getElementById("rightSideText").innerHTML ="Text here"
 						if (!player.isRight) {
 							if (!player.isdead)
 								ctx.drawImage ( paladinImage[1], player.x - 120, player.y - 80, 160, 160);
@@ -208,6 +212,7 @@
 								ctx.drawImage ( paladinImage[2], player.x - 80, player.y - 80, 160, 160);
 						}
 					} else if (player.class == "Mage") {
+						document.getElementById("rightSideText").innerHTML ="Text here"
 						if (!player.isRight) {
 							if (!player.isdead)
 								ctx.drawImage ( mageImage[1], player.x - 120, player.y - 80, 160, 160);
@@ -220,6 +225,7 @@
 								ctx.drawImage ( mageImage[2], player.x - 80, player.y - 80, 160, 160);
 						}
 					} else if (player.class == "Archer") {
+						document.getElementById("rightSideText").innerHTML ="Text here"
 						if (!player.isRight) {
 							if (!player.isdead)
 								ctx.drawImage ( archerImage[1], player.x - 120, player.y - 80, 160, 160);
@@ -329,7 +335,6 @@
 					}
 				}
 				
-			}
 		});
 		//For game over.
 		socket.on ('gameOver',function(path){
