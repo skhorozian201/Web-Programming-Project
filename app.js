@@ -334,8 +334,21 @@ class Player {
                     team1Score ++;
                 }
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
-                    team2Score ++ ;            
-                this.Death ();//Call death function on current player
+                    team2Score ++ ;
+                }
+            if (team2Score ==1 || team1Score ==1){//Whoever reaches 10 points wins
+                for (var i in SOCKET_LIST) {
+                    var socket = SOCKET_LIST [i];
+                    var player = PLAYER_LIST[i]
+                    var pack = {team1,team1Score,team2,team2Score,player}
+                    socket.emit('gameOver',pack)//Catch that on html side and end the game
+                }
+                console.log("GameOver")
+                io.sockets.server.close();//Closes the game.
+            }
+            else {
+            this.Death ();//Call death function on current player
+                }
             }
 
             for (var i in this.onDealingDamageEvent) { //this calls on damage taken event
@@ -347,7 +360,7 @@ class Player {
         else {
             damage = 0;
         }
-    }
+
 
         return damage; //Return the damage incase it changes... somehow...
     }
@@ -398,16 +411,6 @@ class Player {
         this.isDead = true;//Keep them //dead for 5 seconds
         this.isUntargetable = true;//Cant hit them
         console.log (this.name + " died.");       
-        if (team2Score == 2 || team1Score == 2){//Whoever reaches 10 points wins
-            for (var i in SOCKET_LIST) {
-                var socket = SOCKET_LIST [i];
-                var player = PLAYER_LIST[i]
-                var pack = {team1,team1Score,team2,team2Score,player}
-                socket.emit('gameOver',pack)//Catch that on html side and end the game
-                console.log("GameOver")
-            }
-            io.sockets.server.close();//Closes the game.
-        }
         this.Respawn ();
     }
 
@@ -557,18 +560,23 @@ io.sockets.on ('connection', function (socket){
             //after connecting check the login credentials
             database.collection("users").findOne({}, function(err, result) {
                 if (err) throw err;
-                
-                if (result.username == data.username ) {
-                    SendResult (false); 
-                    console.log("Username ALready Taken")
-                }
-                else{
+                var found = false                 
+                for (x in result) {
+                    ress = result[x]                    
+                    if (ress.username == data.username  ) {
+                        SendResult (false); 
+                        console.log("Username ALready Taken")
+                        found = true
+                        break
+                    } 
+                };
+                if(!found){
                     database.collection("users").insertOne(data, function(err, res) {
                         if (err) throw err;
                         console.log(data.username + " Signed UP");
                         SendResult(true)
                         CreatePlayer(data)
-                        db.close();
+                        db.close()
                         });
                 }
             });
@@ -584,27 +592,27 @@ io.sockets.on ('connection', function (socket){
             var database = db.db("mydb");
 
             //after connecting check the login credentials
-            database.collection("users").findOne({}, function(err, result) {
+            database.collection("users").find({}).toArray(function(err, result) {
                 if (err) throw err;
-                
-                if (result.username == data.username && result.password == data.password) {
-                    SendResult (true); //if the login credentials are correct, create a player and send result to the client
-                    CreatePlayer (data);
-                } else {
+                console.log(result)
+                var found = false                 
+                for (x in result) {
+                    ress = result[x]                    
+                    if (ress.username == data.username && ress.password == data.password) {
+                        SendResult (true); //if the login credentials are correct, create a player and send result to the client
+                        CreatePlayer(ress)
+                        found = true
+                        break
+                    } 
+                };
+                if(!found){
+                    console.log("Cant find Username")
                     SendResult (false); //otherwise just send result to the client
                 }
             });
 
         });
     });
-
-    // socket.on ("signup", function (data){ //Create a new account if username isn't already taken
-    //     MongoClient.connect(dburl, function(err, db) {
-    //         if (err) throw err;
-    //         var database = db.db("mydb");
-
-    //     });
-    // });
 
     function CreatePlayer (data) {
         console.log ("Created player");
