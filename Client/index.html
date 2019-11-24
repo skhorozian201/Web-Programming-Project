@@ -41,6 +41,9 @@
 			<img id = "iconMageQ" src = "img/IconMageQ.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "iconMageE" src = "img/IconMageE.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "iconMageR" src = "img/IconMageR.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "iconArcherQ" src = "img/IconArcherQ.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "iconArcherE" src = "img/IconArcherE.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "iconArcherR" src = "img/IconArcherR.png" style = "width:10px; height:10px; display: none;" ></img>
 		</a>
 		
 	</head>
@@ -107,7 +110,10 @@
 							document.getElementById ("iconPaladinR"),
 							document.getElementById ("iconMageQ"),
 							document.getElementById ("iconMageE"),
-							document.getElementById ("iconMageR")];
+							document.getElementById ("iconMageR"),
+							document.getElementById ("iconArcherQ"),
+							document.getElementById ("iconArcherE"),
+							document.getElementById ("iconArcherR")];
 
 		var loginNameElement = document.getElementById ("loginUsername");
 		var loginPasswordElement = document.getElementById ("loginPassword");
@@ -302,7 +308,7 @@
 					}
 				} else if (localPlayer.class == "Archer") {
 					if (localPlayer.cd1 <= 0)
-						ctx.drawImage (iconImages[3], 50, 475, 64, 64);
+						ctx.drawImage (iconImages[6], 50, 475, 64, 64);
 					else {
 						ctx.fillStyle = "#000000";
 						ctx.fillRect (50, 475, 64, 64);
@@ -311,7 +317,7 @@
 					}
 
 					if (localPlayer.cd2 <= 0)
-						ctx.drawImage (iconImages[4], 150, 475, 64, 64);
+						ctx.drawImage (iconImages[7], 150, 475, 64, 64);
 					else {
 						ctx.fillStyle = "#000000";
 						ctx.fillRect (150, 475, 64, 64);
@@ -320,7 +326,7 @@
 					}
 
 					if (localPlayer.cd3 <= 0)
-						ctx.drawImage (iconImages[5], 250, 475, 64, 64);
+						ctx.drawImage (iconImages[8], 250, 475, 64, 64);
 					else {
 						ctx.fillStyle = "#000000";
 						ctx.fillRect (250, 475, 64, 64);
@@ -330,7 +336,7 @@
 				}
 				
 			}
-		});
+		);
 		//For game over.
 		socket.on ('gameOver',function(path){
 			console.log("game over")
