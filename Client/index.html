@@ -9,7 +9,19 @@
 			<img id = "paladinLeft" src = "img/Paladin1.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "paladinDeadRight" src = "img/PaladinDeath.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "paladinDeadLeft" src = "img/PaladinDeath1.png" style = "width:10px; height:10px; display: none;" ></img>
+			
+			<img id = "mageRight" src = "img/Mage.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "mageLeft" src = "img/Mage1.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "mageDeadRight" src = "img/MageDeath.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "mageDeadLeft" src = "img/MageDeath1.png" style = "width:10px; height:10px; display: none;" ></img>
+
 			<img id = "hammerImageAnchor" src = "img/Hammer.png" style = "width:10px; height:10px; display: none;" ></img>
+			
+			<img id = "paladinShockwaveEffect" src = "img/PaladinShockwaveParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "paladinUltEffect" src = "img/PaladinUltParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "paladinHealEffect" src = "img/PaladinHealParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
+			
+
 		</a>
 		
 	</head>
@@ -42,9 +54,22 @@
 		var canvas = document.getElementById ("myCanvas");
 		var ctx = canvas.getContext ("2d");
 		
-		var playerImage = [document.getElementById("paladinRight"), document.getElementById("paladinLeft"), document.getElementById("paladinDeadRight"), document.getElementById("paladinDeadLeft")]; //Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
-		
-		var hammerImage = document.getElementById ("hammerImageAnchor");
+		//Note: DO NOT remove the style from the image anchor, although useless, it ruins it for some reason?
+		var paladinImage = 	[document.getElementById("paladinRight"), 
+							document.getElementById("paladinLeft"), 
+							document.getElementById("paladinDeadRight"), 
+							document.getElementById("paladinDeadLeft")]; 
+
+		var mageImage = [document.getElementById("mageRight"), 
+						document.getElementById("mageLeft"), 
+						document.getElementById("mageDeadRight"), 
+						document.getElementById("mageDeadLeft")]; 
+
+		var particleImages = [document.getElementById ("hammerImageAnchor")];
+
+		var particleEffectImages = 	[document.getElementById ("paladinHealEffect"),
+									document.getElementById ("paladinShockwaveEffect"),
+									document.getElementById ("paladinHealEffect")];
 
 		var loginNameElement = document.getElementById ("loginUsername");
 		var loginPasswordElement = document.getElementById ("loginPassword");
@@ -112,24 +137,37 @@
 					ctx.fillStyle = "#00FF00" ;
 					ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
 
-					if (!player.isRight) {
-						if (!player.isdead)
-							ctx.drawImage ( playerImage[1], player.x - 120, player.y - 80, 160, 160);
-						else 
-							ctx.drawImage ( playerImage[3], player.x - 80, player.y - 80, 160, 160);
-					} else {
-						if (!player.isdead)
-							ctx.drawImage ( playerImage[0], player.x - 80, player.y - 80, 160, 160);
-						else
-							ctx.drawImage ( playerImage[2], player.x - 80, player.y - 80, 160, 160);
+					if (player.class == "Paladin") {
+						if (!player.isRight) {
+							if (!player.isdead)
+								ctx.drawImage ( paladinImage[1], player.x - 120, player.y - 80, 160, 160);
+							else 
+								ctx.drawImage ( paladinImage[3], player.x - 80, player.y - 80, 160, 160);
+						} else {
+							if (!player.isdead)
+								ctx.drawImage ( paladinImage[0], player.x - 80, player.y - 80, 160, 160);
+							else
+								ctx.drawImage ( paladinImage[2], player.x - 80, player.y - 80, 160, 160);
+						}
+					} else if (player.class == "Mage") {
+						if (!player.isRight) {
+							if (!player.isdead)
+								ctx.drawImage ( mageImage[1], player.x - 120, player.y - 80, 160, 160);
+							else 
+								ctx.drawImage ( mageImage[3], player.x - 80, player.y - 80, 160, 160);
+						} else {
+							if (!player.isdead)
+								ctx.drawImage ( mageImage[0], player.x - 80, player.y - 80, 160, 160);
+							else
+								ctx.drawImage ( mageImage[2], player.x - 80, player.y - 80, 160, 160);
+						}
 					}
-
 				}
 
 				for (var i = 0; i < data.projectileDataPack.length; i++)
 				{
 					var projectile = data.projectileDataPack [i];
-					ctx.drawImage (hammerImage, projectile.x - 20, projectile.y - 20, 40, 40);
+					ctx.drawImage (particleImages[0], projectile.x - 20, projectile.y - 20, 40, 40);
 				}
 			}
 

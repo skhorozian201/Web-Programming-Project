@@ -24,8 +24,35 @@ var baseUserLogin = {
 var SOCKET_LIST = {}; //List of connections
 var PLAYER_LIST = {}; //List of players
 var PROJECTILE_LIST = []; //List of projectiles
+var PARTICLE_EFFECT_LIST = []; //List of particle
 
 var io = require ('socket.io') (serv,{});
+
+class ParticleEffect {
+    constructor (x_pos, y_pos, owner, lifetime, id) {
+        this.x_pos = x_pos;//x position
+        this.y_pos = y_pos;//y position
+        this.owner = owner;//the player this effect belongs to
+        this.lifetime = lifetime; //how long the particle can last
+        this.age = 0; //current age of the particle
+        this.id = id;//which particle effect it is
+    }
+
+    UpdateFunc () {//this is called every frame update
+
+    }
+}
+
+class FollowPlayerEffect extends ParticleEffect{
+    constructor (x_pos, y_pos, owner, lifetime, id) {
+        super (x_pos, y_pos, owner, lifetime, id);
+    }
+
+    UpdateFunc () {//this particle effect follows its owner. Owner doesnt have to be the player that created it
+        this.x_pos = this.owner.x_position;
+        this.y_pos = this.owner.y_position;
+    }
+}
 
 //Projectiles
 class Projectile {
@@ -97,6 +124,19 @@ class PaladinShockWave extends Projectile {
     }
 }
 
+class MageUltProjectile extends Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
+        super (x_init, y_init, angle, radius, speed, owner, lifetime);
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        if (hit.team != this.owner.team){
+            this.owner.DealDamage (40, hit);
+            hit.TakeStun (50);
+        }
+    }
+}
+
 class MagePrimary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
@@ -120,7 +160,7 @@ class MageSecondary extends Projectile {
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
-            this.owner.DealDamage (10 + (10 * manaBuildUp), hit);
+            this.owner.DealDamage (10 + (10 * this.manaBuildUp), hit);
             this.DestroyThis (i);
         }
     }
@@ -156,7 +196,7 @@ class PaladinHeal extends Spell {
 
         setTimeout ( function () {
             caster.SendHeal (40,caster);
-            this.spellCooldown = 200;
+            this.spellCooldown = 250;
         }, 150);
     }
 }
@@ -180,7 +220,7 @@ class PaladinDash extends Spell {
         this.y_velo = (Math.sin(angle));
         this.framesLeft = 10;
         caster.actionTimer = 10;
-        this.spellCooldown = 100;
+        this.spellCooldown = 200;
     }
 
     FrameMovement (caster) {
@@ -206,7 +246,7 @@ class PaladinUlt extends Spell {
     }
 
     SpellOnInitialization (caster) {
-        
+        caster.onTakingDamageEvent.push (this.DamageReflection);
     }
 
     SpellCast (caster) {
@@ -217,10 +257,97 @@ class PaladinUlt extends Spell {
         }, 5000);
     }
 
-    DamageReduction (player, dealer, damage) {
-        if (this.isActive){
+    DamageReflection (player, dealer, damage) {
+
+        if (player.spell3.isActive){
             player.DealDamage (damage * 0.33,dealer);
         }
+    }
+}
+
+class MageBarrier extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+
+        this.isActive = false;
+    }
+
+    SpellOnInitialization (caster) {
+        caster.onTakingDamageEvent.push (this.Barrier);
+    }
+
+    SpellCast (caster) {
+        this.spellCooldown = 250;
+        this.isActive = true;
+        setTimeout(() => {
+            this.isActive = false;
+        }, 2000);
+    }
+
+    Barrier (player, dealer, damage) {
+
+        if (player.spell1.isActive){
+            player.spell1.isActive = false;
+            player.SendHeal (damage * 2, player);
+            player.manaBuildUp = 5;
+        }
+    }
+}
+
+class MageTeleport extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+    }
+
+    SpellOnInitialization (caster) {
+        
+    }
+
+    SpellCast (caster) {
+        caster.actionTimer = 15;
+        var x_tele = caster.x_position - caster.mousePositionX;
+        var y_tele = caster.y_position - caster.mousePositionY;
+        
+        if (x_tele > 500)
+            x_tele = 500;
+        else if (x_tele < -500)
+            x_tele = -500;
+
+        if (y_tele > 500)
+            y_tele = 500;
+        else if (y_tele < -500)
+            y_tele = -500;
+
+
+        setTimeout ( function () {
+            caster.x_position -= x_tele;
+            caster.y_position -= y_tele;
+            this.spellCooldown = 125;
+        }, 150);
+    }
+}
+
+class MageUlt extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+    }
+
+    SpellOnInitialization (caster) {
+        
+    }
+
+    SpellCast (caster) {
+        caster.actionTimer = 50;
+
+        setTimeout ( function () {
+            var projectile = new MageUltProjectile (caster.x_position, caster.y_position, 0, 450, 0, caster, 0);
+
+            PROJECTILE_LIST.push (projectile);
+            this.spellCooldown = 2500;
+        }, 500);
     }
 }
 
@@ -351,10 +478,10 @@ class Player {
                 }
             }
 
-            for (var i in this.onDealingDamageEvent) { //this calls on damage taken event
-                func = this.onDealingDamageEvent [i];
+            for (var i in this.onTakingDamageEvent) { //this calls on damage taken event
+                func = this.onTakingDamageEvent [i];
 
-                func (this, dealer, damage)
+                func (this, dealer, damage);
             }
         }
         else {
@@ -458,12 +585,14 @@ class Paladin extends Player {
     PrimaryAttackFunc () {
         if (this.actionTimer <= 0) { //temporary attack function
             this.actionTimer = 15;
-            setTimeout ( function () {
-                var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
 
-                var range_x = 100 * Math.cos (angle);
-                var range_y = 100 * Math.sin (angle);
-                var attackProjectile = new PaladinPrimary (this.x_position + range_x, this.y_position + range_y, 0, 60, 0, this, 0);
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+
+            var range_x = 100 * Math.cos (angle);
+            var range_y = 100 * Math.sin (angle);
+            var attackProjectile = new PaladinPrimary (this.x_position + range_x, this.y_position + range_y, 0, 60, 0, this, 0);
+
+            setTimeout ( function () {
                 PROJECTILE_LIST.push (attackProjectile);
             }, 150);
         }
@@ -472,12 +601,11 @@ class Paladin extends Player {
     SecondaryAttackFunc () {
         if (this.actionTimer <= 0) { //temporary attack function
             this.actionTimer = 25;
-
-            setTimeout ( function () {
             var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
             var attackProjectile = new PaladinSecondary (this.x_position, this.y_position, angle, 40, 30, this, 12);
 
-            PROJECTILE_LIST.push (attackProjectile);
+            setTimeout ( function () {
+                PROJECTILE_LIST.push (attackProjectile);
             }, 250);
         }
     }
@@ -491,6 +619,14 @@ class Mage extends Player {
         this.maxHealth = 175; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
 
+        this.spell1 = new MageBarrier ();
+        this.spell2 = new MageTeleport ();
+        this.spell3 = new MageUlt ();
+
+        this.spell1.SpellOnInitialization (this); //Calls their initialization function
+        this.spell2.SpellOnInitialization (this);
+        this.spell3.SpellOnInitialization (this);
+
         this.currentManaBuildUp = 0;
     }
 
@@ -498,24 +634,27 @@ class Mage extends Player {
         if (this.actionTimer <= 0) { //temporary attack function
             this.actionTimer = 10;
 
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+            var attackProjectile = new MagePrimary (this.x_position, this.y_position, angle, 25, 30, this, 20);
+
+
             setTimeout (function () {
-                var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
-                var attackProjectile = new MagePrimary (this.x_position, this.y_position, angle, 25, 20, this, 10);
-    
+
                 PROJECTILE_LIST.push (attackProjectile);
             },10);
         }
     }
 
-    PrimaryAttackFunc () {
+    SecondaryAttackFunc () {
         if (this.actionTimer <= 0) { //temporary attack function
             this.actionTimer = 15;
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+            var attackProjectile = new MageSecondary (this.x_position, this.y_position, angle, 10 + 10 * this.currentManaBuildUp, 10 + 8 * this.currentManaBuildUp, this, 15, this.currentManaBuildUp);
+            this.currentManaBuildUp = 0;
+
 
             setTimeout (function () {
-                var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
-                var attackProjectile = new MageSecondary (this.x_position, this.y_position, angle, 10 + 10 * this.manaBuildUp, 10 + 8 * this.manaBuildUp, this, 15, this.manaBuildUp);
-                this.manaBuildUp = 0;
-
+ 
                 PROJECTILE_LIST.push (attackProjectile);
             },10);
         }
@@ -560,23 +699,23 @@ io.sockets.on ('connection', function (socket){
             //after connecting check the login credentials
             database.collection("users").findOne({}, function(err, result) {
                 if (err) throw err;
-                var found = false                 
+                var found = false;                 
                 for (x in result) {
                     ress = result[x]                    
                     if (ress.username == data.username  ) {
                         SendResult (false); 
-                        console.log("Username ALready Taken")
-                        found = true
-                        break
+                        console.log("Username ALready Taken");
+                        found = true;
+                        break;
                     } 
                 };
                 if(!found){
                     database.collection("users").insertOne(data, function(err, res) {
                         if (err) throw err;
                         console.log(data.username + " Signed UP");
-                        SendResult(true)
-                        CreatePlayer(data)
-                        db.close()
+                        SendResult(true);
+                        CreatePlayer(data);
+                        db.close();
                         });
                 }
             });
@@ -594,19 +733,19 @@ io.sockets.on ('connection', function (socket){
             //after connecting check the login credentials
             database.collection("users").find({}).toArray(function(err, result) {
                 if (err) throw err;
-                console.log(result)
-                var found = false                 
+                console.log(result);
+                var found = false;            
                 for (x in result) {
-                    ress = result[x]                    
+                    ress = result[x];                    
                     if (ress.username == data.username && ress.password == data.password) {
                         SendResult (true); //if the login credentials are correct, create a player and send result to the client
-                        CreatePlayer(ress)
-                        found = true
-                        break
+                        CreatePlayer(ress);
+                        found = true;
+                        break;
                     } 
                 };
                 if(!found){
-                    console.log("Cant find Username")
+                    console.log("Cant find Username");
                     SendResult (false); //otherwise just send result to the client
                 }
             });
@@ -638,7 +777,7 @@ io.sockets.on ('connection', function (socket){
         if (data.class == "paladin")
             var player = new Paladin (socket.id, data.username, current_team); //constructs a new Player instance
         else if (data.class == "mage")
-            console.log ("made mage");
+        var player = new Mage (socket.id, data.username, current_team); 
         else if (data.class == "archer")
             console.log ("made archer");
         else if (data.class == "rogue")
@@ -767,41 +906,56 @@ setInterval (function () {
             currentHealth: player.currentHealth,
             id: player.id,
             isdead: player.isDead,
-            isRight: isFacingRight
+            isRight: isFacingRight,
+            class: player.class
         });
         
+    }
+
+    for (var i in PARTICLE_EFFECT_LIST) {
+        particle = PARTICLE_EFFECT_LIST [i];
+        if (particle.owner == null || particle.age >= particle.lifetime)
+            delete PARTICLE_EFFECT_LIST [i];
+        else{
+            particle.UpdateFunc ();
+            particle.age++;
+        }
     }
 
     for (var i in PROJECTILE_LIST) {
         var projectile = PROJECTILE_LIST [i];
 
-        //Projectile movement.
-        projectile.x_position += projectile.x_velocity;
-        projectile.y_position += projectile.y_velocity;
+        if (projectile.owner == null)
+            delete PROJECTILE_LIST [i]
+        else {
+            //Projectile movement.
+            projectile.x_position += projectile.x_velocity;
+            projectile.y_position += projectile.y_velocity;
+            
+            //This checks for collision every frame with every player.
+            for (var i in PLAYER_LIST) {
+                var player = PLAYER_LIST [i];
 
-        //This checks for collision every frame with every player.
-        for (var i in PLAYER_LIST) {
-            var player = PLAYER_LIST [i];
-
-            if (player != projectile.owner) {
-                if (GetDistance(player.x_position ,player.y_position, projectile.x_position, projectile.y_position) <= projectile.radius + player.radius) {
-                    projectile.OnCollision (player, i);
+                if (player != projectile.owner) {
+                    if (GetDistance(player.x_position ,player.y_position, projectile.x_position, projectile.y_position) <= projectile.radius + player.radius) {
+                        projectile.OnCollision (player, i);
+                    }
                 }
             }
-        }
 
-        //Projectile data to be sent to the client
-        projectileDataPack.push ({
-            x: projectile.x_position,
-            y: projectile.y_position,
-            rad: projectile.radius
-        });
+            //Projectile data to be sent to the client
+            projectileDataPack.push ({
+                x: projectile.x_position,
+                y: projectile.y_position,
+                rad: projectile.radius
+            });
 
 
-        if (projectile.age > projectile.lifetime) {
-            projectile.DestroyThis (i);
-        } else {
-            projectile.age++;
+            if (projectile.age > projectile.lifetime) {
+                projectile.DestroyThis (i);
+            } else {
+                projectile.age++;
+            }   
         }
     }
 
