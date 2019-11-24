@@ -103,7 +103,7 @@
 					loginNameElement.disabled = true;
 					loginPasswordElement.disabled = true;
 					classPicker.disabled = true;
-					document.getElementById("loginDiv").innerHTML = "<h2>Welcome " + (data.player.name).toUpperCase() +"<span style = float:right;> Your Team : " +data.player.team+"</span></h2><h3 id=kills style=color:green;><span style = float:right;></span></h3><h3 id=team2score style = float:right;color:red;></h3>";
+					document.getElementById("loginDiv").innerHTML = "<h2>Welcome " + (data.player.name).toUpperCase() + "<span style = color:blue;margin-left:6em;>First team to get 10 kills WINS!!!!! </span><span style = float:right;> Your Team : " +data.player.team+"</span></h2><h3 id=kills style=color:green;><span style = float:right;></span></h3><h3 id=team2score style = float:right;color:red;></h3>";
 				} 
 				else if (!usernameAvailable){
 					window.alert("     Username Already Taken\n          Try Again");
