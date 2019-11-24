@@ -90,7 +90,7 @@ class Projectile {
 class PaladinPrimary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
-        this.id = 1;
+        this.id = 0;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -118,7 +118,7 @@ class PaladinSecondary extends Projectile {
 class PaladinShockWave extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
-        this.id = 2;
+        this.id = -1;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -132,13 +132,12 @@ class PaladinShockWave extends Projectile {
 class MageUltProjectile extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
-        this.id = 5;
+        this.id = 3;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
-            this.owner.DealDamage (40, hit);
-            hit.TakeStun (50);
+            this.owner.DealDamage (5, hit);
         }
     }
 }
@@ -146,7 +145,7 @@ class MageUltProjectile extends Projectile {
 class MagePrimary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
-        this.id = 3;
+        this.id = 1;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -162,7 +161,7 @@ class MagePrimary extends Projectile {
 class MageSecondary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime, manaBuildUp) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
-        this.id = 4;
+        this.id = 2;
         this.manaBuildUp = manaBuildUp;
     }
 
@@ -364,7 +363,7 @@ class MageUlt extends Spell {
         this.spellCooldown = 375;
 
         setTimeout ( function () {
-            var projectile = new MageUltProjectile (caster.x_position, caster.y_position, 0, 450, 0, caster, 0);
+            var projectile = new MageUltProjectile (caster.x_position, caster.y_position, 0, 450, 0, caster, 100);
 
             PROJECTILE_LIST.push (projectile);
         }, 500);
@@ -988,6 +987,7 @@ setInterval (function () {
             projectileDataPack.push ({
                 x: projectile.x_position,
                 y: projectile.y_position,
+                id: projectile.id,
                 rad: projectile.radius
             });
 

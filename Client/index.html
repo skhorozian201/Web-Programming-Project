@@ -16,7 +16,10 @@
 			<img id = "mageDeadLeft" src = "img/MageDeath1.png" style = "width:10px; height:10px; display: none;" ></img>
 
 			<img id = "hammerImageAnchor" src = "img/Hammer.png" style = "width:10px; height:10px; display: none;" ></img>
-			
+			<img id = "magePriProjectile" src = "img/MagePrimary.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "mageSecProjectile" src = "img/MageSecondary.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "mageUltProjectile" src = "img/MageUltProjectile.png" style = "width:10px; height:10px; display: none;" ></img>
+
 			<img id = "paladinShockwaveEffect" src = "img/PaladinShockwaveParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "paladinUltEffect" src = "img/PaladinUltParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "paladinHealEffect" src = "img/PaladinHealParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
@@ -72,7 +75,10 @@
 						document.getElementById("mageDeadRight"), 
 						document.getElementById("mageDeadLeft")]; 
 
-		var projectileImages = [document.getElementById ("hammerImageAnchor")];
+		var projectileImages = 	[document.getElementById ("hammerImageAnchor"),
+								document.getElementById ("magePriProjectile"),
+								document.getElementById ("mageSecProjectile"),
+								document.getElementById ("mageUltProjectile"),];
 
 		var particleEffectImages = 	[document.getElementById ("paladinHealEffect"),
 									document.getElementById ("paladinShockwaveEffect"),
@@ -194,7 +200,8 @@
 				for (var i = 0; i < data.projectileDataPack.length; i++)
 				{
 					var projectile = data.projectileDataPack [i];
-					ctx.drawImage (projectileImages[0], projectile.x - 20, projectile.y - 20, 40, 40);
+					if (projectile.id >= 0)
+						ctx.drawImage (projectileImages[projectile.id], projectile.x - projectile.rad/2, projectile.y - projectile.rad/2, projectile.rad, projectile.rad);
 				}
 
 				
@@ -227,31 +234,31 @@
 					}							
 				} else if (localPlayer.class == "Mage") {
 					if (localPlayer.cd1 <= 0)
-								ctx.drawImage (iconImages[3], 50, 475, 64, 64);
-							else {
-								ctx.fillStyle = "#000000";
-								ctx.fillRect (50, 475, 64, 64);
-								ctx.fillStyle = "#FFFFFF";
-								ctx.fillText (localPlayer.cd1/25, 50, 525);
-							}
+						ctx.drawImage (iconImages[3], 50, 475, 64, 64);
+					else {
+						ctx.fillStyle = "#000000";
+						ctx.fillRect (50, 475, 64, 64);
+						ctx.fillStyle = "#FFFFFF";
+						ctx.fillText (localPlayer.cd1/25, 50, 525);
+					}
 
-							if (localPlayer.cd2 <= 0)
-								ctx.drawImage (iconImages[4], 150, 475, 64, 64);
-							else {
-								ctx.fillStyle = "#000000";
-								ctx.fillRect (150, 475, 64, 64);
-								ctx.fillStyle = "#FFFFFF";
-								ctx.fillText (localPlayer.cd2/25, 150, 525);
-							}
+					if (localPlayer.cd2 <= 0)
+						ctx.drawImage (iconImages[4], 150, 475, 64, 64);
+					else {
+						ctx.fillStyle = "#000000";
+						ctx.fillRect (150, 475, 64, 64);
+						ctx.fillStyle = "#FFFFFF";
+						ctx.fillText (localPlayer.cd2/25, 150, 525);
+					}
 
-							if (localPlayer.cd3 <= 0)
-								ctx.drawImage (iconImages[5], 250, 475, 64, 64);
-							else {
-								ctx.fillStyle = "#000000";
-								ctx.fillRect (250, 475, 64, 64);
-								ctx.fillStyle = "#FFFFFF";
-								ctx.fillText (localPlayer.cd3/25, 250, 525);
-							}
+					if (localPlayer.cd3 <= 0)
+						ctx.drawImage (iconImages[5], 250, 475, 64, 64);
+					else {
+						ctx.fillStyle = "#000000";
+						ctx.fillRect (250, 475, 64, 64);
+						ctx.fillStyle = "#FFFFFF";
+						ctx.fillText (localPlayer.cd3/25, 250, 525);
+					}
 				}
 				
 			}
