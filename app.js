@@ -73,6 +73,7 @@ class Projectile {
         this.onCollisionEffect; //This function is called on collision with a player. (Player hit)
         this.onExpireEffect; //This function is called on expire. 
 
+        this.id = 0;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -89,6 +90,7 @@ class Projectile {
 class PaladinPrimary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 0;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -96,6 +98,8 @@ class PaladinPrimary extends Projectile {
             this.owner.DealDamage (20, hit);
         }
     }
+
+    
 }
 
 class PaladinSecondary extends Projectile {
@@ -114,6 +118,7 @@ class PaladinSecondary extends Projectile {
 class PaladinShockWave extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = -1;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -127,12 +132,12 @@ class PaladinShockWave extends Projectile {
 class MageUltProjectile extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 3;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
-            this.owner.DealDamage (40, hit);
-            hit.TakeStun (50);
+            this.owner.DealDamage (5, hit);
         }
     }
 }
@@ -140,6 +145,7 @@ class MageUltProjectile extends Projectile {
 class MagePrimary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 1;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
@@ -155,12 +161,43 @@ class MagePrimary extends Projectile {
 class MageSecondary extends Projectile {
     constructor (x_init, y_init, angle, radius, speed, owner, lifetime, manaBuildUp) {
         super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 2;
         this.manaBuildUp = manaBuildUp;
     }
 
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
             this.owner.DealDamage (10 + (10 * this.manaBuildUp), hit);
+            this.DestroyThis (i);
+        }
+    }
+}
+
+class ArcherArrow extends Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
+        super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 4;
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        if (hit.team != this.owner.team){
+            this.owner.DealDamage (20, hit);
+            this.DestroyThis (i);
+        }
+    }
+}
+
+class ArcherUltProjectile extends Projectile {
+    constructor (x_init, y_init, angle, radius, speed, owner, lifetime) {
+        super (x_init, y_init, angle, radius, speed, owner, lifetime);
+        this.id = 5;
+    }
+
+    OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
+        if (hit.team != this.owner.team){
+            if (hit.currentHealth/hit.maxHealth <= 0.5) {
+                hit.Death ();
+            }
             this.DestroyThis (i);
         }
     }
@@ -196,9 +233,10 @@ class PaladinHeal extends Spell {
         this.spellCooldown = 250;
 
         var effect = new FollowPlayerEffect (caster.x_position, caster.y_position, caster, 15, 0);
+        PARTICLE_EFFECT_LIST.push (effect);
 
         setTimeout ( function () {
-            caster.SendHeal (40,caster);
+            caster.SendHeal ((caster.maxHealth - caster.currentHealth) * 0.5,caster);
         }, 150);
     }
 }
@@ -230,7 +268,7 @@ class PaladinDash extends Spell {
             caster.x_position += caster.spell2.x_velo * 20;
             caster.y_position += caster.spell2.y_velo * 20;
             if (caster.spell2.framesLeft == 1) {
-                var shockWave = new PaladinShockWave (caster.x_position, caster.y_position, 0, 75, 0, caster, 0);
+                var shockWave = new PaladinShockWave (caster.x_position, caster.y_position, 0, 125, 0, caster, 0);
                 var effect = new ParticleEffect (caster.x_position, caster.y_position, caster, 25, 1);
 
                 PARTICLE_EFFECT_LIST.push (effect);
@@ -268,7 +306,7 @@ class PaladinUlt extends Spell {
     DamageReflection (player, dealer, damage) {
 
         if (player.spell3.isActive){
-            player.DealDamage (damage * 0.33,dealer);
+            player.DealDamage (damage * 0.66,dealer);
         }
     }
 }
@@ -288,6 +326,10 @@ class MageBarrier extends Spell {
     SpellCast (caster) {
         this.spellCooldown = 250;
         this.isActive = true;
+
+        var effect = new FollowPlayerEffect (caster.x_position,caster.y_position,caster, 50, 3);
+        PARTICLE_EFFECT_LIST.push (effect);
+
         setTimeout(() => {
             this.isActive = false;
         }, 2000);
@@ -296,7 +338,6 @@ class MageBarrier extends Spell {
     Barrier (player, dealer, damage) {
 
         if (player.spell1.isActive){
-            player.spell1.isActive = false;
             player.SendHeal (damage * 2, player);
             player.manaBuildUp = 5;
         }
@@ -317,7 +358,8 @@ class MageTeleport extends Spell {
         caster.actionTimer = 15;
         var x_tele = caster.x_position - caster.mousePositionX;
         var y_tele = caster.y_position - caster.mousePositionY;
-        
+        this.spellCooldown = 125;
+
         if (x_tele > 500)
             x_tele = 500;
         else if (x_tele < -500)
@@ -332,7 +374,6 @@ class MageTeleport extends Spell {
         setTimeout ( function () {
             caster.x_position -= x_tele;
             caster.y_position -= y_tele;
-            this.spellCooldown = 125;
         }, 150);
     }
 }
@@ -348,14 +389,96 @@ class MageUlt extends Spell {
     }
 
     SpellCast (caster) {
-        caster.actionTimer = 50;
+        caster.actionTimer = 25;
+        this.spellCooldown = 375;
 
         setTimeout ( function () {
-            var projectile = new MageUltProjectile (caster.x_position, caster.y_position, 0, 450, 0, caster, 0);
+            var projectile = new MageUltProjectile (caster.x_position, caster.y_position, 0, 450, 0, caster, 100);
 
             PROJECTILE_LIST.push (projectile);
-            this.spellCooldown = 2500;
-        }, 500);
+        }, 1000);
+    }
+}
+
+class ArcherQ extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+    }
+
+    SpellOnInitialization (caster) {
+        
+    }
+
+    SpellCast (caster) {
+        this.spellCooldown = 375;
+
+        var effect = new FollowPlayerEffect (caster.x_position, caster.y_position, caster, 100, 4);
+        PARTICLE_EFFECT_LIST.push (effect);
+
+        caster.attackSpeed = 3;
+
+        setTimeout ( function () {
+            caster.attackSpeed = 1;
+        }, 4000);
+    }
+}
+
+class ArcherMark extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+        this.target = null;
+        this.effect = null;
+    }
+
+    SpellOnInitialization (caster) {
+        caster.onDealingDamageEvent.push (this.MarkTarget);
+    }
+
+    SpellCast (caster) {
+        if (this.target != null){
+            this.spellCooldown = 200;
+            this.target.TakeStun (50);
+
+            this.target = null;
+            this.effect.owner = null;
+            this.effect = null;
+        }
+    }
+
+    MarkTarget (caster, target, damage) {
+        if (caster.spell2.effect != null){
+            caster.spell2.effect.owner = null;
+        }
+        caster.spell2.effect = new FollowPlayerEffect (caster.x_position, caster.y_position, target, 1000000, 5);
+        PARTICLE_EFFECT_LIST.push (caster.spell2.effect);
+        caster.spell2.target = target;
+    }
+}
+
+class ArcherUlt extends Spell {
+    constructor () {
+        super ();
+        this.spellCooldown = 0;
+    }
+
+    SpellOnInitialization (caster) {
+        
+    }
+
+    SpellCast (caster) {
+        caster.actionTimer = 25;
+        this.spellCooldown = 500;
+
+        var angle = Math.atan2 (caster.mousePositionY-caster.y_position,caster.mousePositionX-caster.x_position);
+        var projectile = new ArcherUltProjectile (caster.x_position, caster.y_position, angle, 50, 75, caster, 25);
+
+
+        setTimeout ( function () {
+
+            PROJECTILE_LIST.push (projectile);
+        }, 1000);
     }
 }
 
@@ -471,19 +594,8 @@ class Player {
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
                     team2Score ++ ;
                 }
-            if (team2Score ==10 || team1Score ==10){//Whoever reaches 10 points wins
-                for (var i in SOCKET_LIST) {
-                    var socket = SOCKET_LIST [i];
-                    var player = PLAYER_LIST[i]
-                    var pack = {team1,team1Score,team2,team2Score,player}
-                    socket.emit('gameOver',pack)//Catch that on html side and end the game
-                }
-                console.log("GameOver")
-                io.sockets.server.close();//Closes the game.
-            }
-            else {
-            this.Death ();//Call death function on current player
-                }
+                this.Death ();//Call death function on current player
+                
             }
 
             for (var i in this.onTakingDamageEvent) { //this calls on damage taken event
@@ -522,8 +634,13 @@ class Player {
     //damage is the number
     //victim is the unfortunate player taking the damage
     DealDamage (damage, victim) {
-
         victim.TakeDamage (damage, this);
+
+        for (var i in this.onDealingDamageEvent) { //this calls on damage taken event
+            func = this.onDealingDamageEvent [i];
+
+            func (this, victim, damage);
+        }
     }
 
     //Called when this player wants to heal
@@ -545,7 +662,18 @@ class Player {
         this.isImmune = true;//Kepp them immune for 5 seconds
         this.isDead = true;//Keep them //dead for 5 seconds
         this.isUntargetable = true;//Cant hit them
-        console.log (this.name + " died.");       
+        console.log (this.name + " died.");     
+
+        if (team2Score == team2*3 || team1Score == team1*3){//Whoever reaches 10 points wins
+            for (var i in SOCKET_LIST) {
+                var socket = SOCKET_LIST [i];
+                var player = PLAYER_LIST[i]
+                var pack = {team1,team1Score,team2,team2Score,player}
+                socket.emit('gameOver',pack)//Catch that on html side and end the game
+            }
+            console.log("GameOver")
+            io.sockets.server.close();//Closes the game.
+        }  
         this.Respawn ();
     }
 
@@ -556,12 +684,12 @@ class Player {
                 player.isDead = false;
                 player.isUntargetable = false
 
-                if ( this.team == 2 ){
-                    this.x_position = 95; //Player position on the x-axis
-                    this.y_position = 130; //Player position on the y-axis
+                if ( player.team == 2 ){
+                    player.x_position = 95; //Player position on the x-axis
+                    player.y_position = 130; //Player position on the y-axis
                 } else {
-                    this.x_position = 880; //Player position on the x-axis
-                    this.y_position = 435; //Player position on the y-axis
+                    player.x_position = 880; //Player position on the x-axis
+                    player.y_position = 435; //Player position on the y-axis
                 }
 
                 player.currentHealth = player.maxHealth;
@@ -578,7 +706,7 @@ class Paladin extends Player {
         
         this.class = "Paladin";
 
-        this.maxHealth = 250; //Player maximum health
+        this.maxHealth = 500; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
 
         this.spell1 = new PaladinHeal ();
@@ -624,7 +752,7 @@ class Mage extends Player {
         super (id, name, team);
 
         this.class = "Mage"
-        this.maxHealth = 175; //Player maximum health
+        this.maxHealth = 300; //Player maximum health
         this.currentHealth = this.maxHealth; //Player CURRENT health
 
         this.spell1 = new MageBarrier ();
@@ -672,12 +800,49 @@ class Mage extends Player {
 class Archer extends Player {
     constructor (id, name,team) {
         super (id, name, team);
-    }
-}
 
-class Rogue extends Player {
-    constructor (id, name,team) {
-        super (id, name, team);
+        this.class = "Archer"
+        this.maxHealth = 350; //Player maximum health
+        this.currentHealth = this.maxHealth; //Player CURRENT health
+
+        this.spell1 = new ArcherQ ();
+        this.spell2 = new ArcherMark ();
+        this.spell3 = new ArcherUlt ();
+
+        this.spell1.SpellOnInitialization (this); //Calls their initialization function
+        this.spell2.SpellOnInitialization (this);
+        this.spell3.SpellOnInitialization (this);
+
+        this.attackSpeed = 1;
+    }
+
+    PrimaryAttackFunc () {
+        if (this.actionTimer <= 0) { //temporary attack function
+            this.actionTimer = 15/this.attackSpeed;
+
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+            var attackProjectile = new ArcherArrow (this.x_position, this.y_position, angle, 25, 30, this, 20);
+
+            setTimeout (function () {
+                PROJECTILE_LIST.push (attackProjectile);
+            },10);
+        }
+    }
+
+    SecondaryAttackFunc () {
+        if (this.actionTimer <= 0) { //temporary attack function
+            this.actionTimer = 35/this.attackSpeed;
+            var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
+            var attackProjectile1 = new ArcherArrow (this.x_position, this.y_position, angle, 20, 50, this, 10);
+            var attackProjectile2 = new ArcherArrow (this.x_position, this.y_position, angle-0.2, 20, 50, this, 15);
+            var attackProjectile3 = new ArcherArrow (this.x_position, this.y_position, angle+0.2, 20, 50, this, 15);
+
+            setTimeout (function () {
+                PROJECTILE_LIST.push (attackProjectile1);
+                PROJECTILE_LIST.push (attackProjectile2);
+                PROJECTILE_LIST.push (attackProjectile3);
+            },10);
+        }
     }
 }
 
@@ -784,11 +949,10 @@ io.sockets.on ('connection', function (socket){
         if (data.class == "paladin")
             var player = new Paladin (socket.id, data.username, current_team); //constructs a new Player instance
         else if (data.class == "mage")
-        var player = new Mage (socket.id, data.username, current_team); 
+            var player = new Mage (socket.id, data.username, current_team); 
         else if (data.class == "archer")
-            console.log ("made archer");
-        else if (data.class == "rogue")
-            console.log ("made rogue");
+            var player = new Archer (socket.id, data.username, current_team); 
+
         
         PLAYER_LIST [socket.id] = player; //adds the new player to the list
     }
@@ -866,7 +1030,7 @@ setInterval (function () {
     for (var i in PLAYER_LIST) {
         var player = PLAYER_LIST [i];
 
-        if (!player.isDead && player.actionTimer <= 0 && player.stunTimer <= 0) {
+        if (!player.isDead && player.stunTimer <= 0) {
             //This move the player based on the input
             if (player.moveUpInput) {
                 player.x_position += player.moveSpeed;
@@ -880,12 +1044,13 @@ setInterval (function () {
                 player.y_position -= player.moveSpeed;            
             }
         
-
-            if (player.primaryAttack) {
-                player.PrimaryAttackFunc ();
-            }
-            if (player.secondaryAttack) {
-                player.SecondaryAttackFunc ();
+            if (player.actionTimer <= 0) {
+                if (player.primaryAttack) {
+                    player.PrimaryAttackFunc ();
+                }
+                if (player.secondaryAttack) {
+                    player.SecondaryAttackFunc ();
+                }
             }
 
         }
@@ -927,10 +1092,12 @@ setInterval (function () {
             id: player.id,
             isdead: player.isDead,
             isRight: isFacingRight,
-            class: player.class,
             team1Score:team1Score, 
-            team2Score:team2Score
-
+            team2Score:team2Score,
+            cd1: player.spell1.spellCooldown,
+            cd2: player.spell2.spellCooldown,
+            cd3: player.spell3.spellCooldown,
+            class: player.class
         });
         
     }
@@ -975,6 +1142,7 @@ setInterval (function () {
             projectileDataPack.push ({
                 x: projectile.x_position,
                 y: projectile.y_position,
+                id: projectile.id,
                 rad: projectile.radius
             });
 
