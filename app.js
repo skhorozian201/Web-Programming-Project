@@ -193,10 +193,12 @@ class PaladinHeal extends Spell {
 
     SpellCast (caster) {
         caster.actionTimer = 15;
+        this.spellCooldown = 250;
+
+        var effect = new FollowPlayerEffect (caster.x_position, caster.y_position, caster, 15, 0);
 
         setTimeout ( function () {
             caster.SendHeal (40,caster);
-            this.spellCooldown = 250;
         }, 150);
     }
 }
@@ -229,7 +231,9 @@ class PaladinDash extends Spell {
             caster.y_position += caster.spell2.y_velo * 20;
             if (caster.spell2.framesLeft == 1) {
                 var shockWave = new PaladinShockWave (caster.x_position, caster.y_position, 0, 75, 0, caster, 0);
+                var effect = new ParticleEffect (caster.x_position, caster.y_position, caster, 25, 1);
 
+                PARTICLE_EFFECT_LIST.push (effect);
                 PROJECTILE_LIST.push (shockWave);
             }
             caster.spell2.framesLeft--;
@@ -252,6 +256,10 @@ class PaladinUlt extends Spell {
     SpellCast (caster) {
         this.spellCooldown = 500;
         this.isActive = true;
+
+        var effect = new FollowPlayerEffect (caster.x_position,caster.y_position,caster, 125, 2);
+        PARTICLE_EFFECT_LIST.push (effect);
+
         setTimeout(() => {
             this.isActive = false;
         }, 5000);
@@ -841,6 +849,7 @@ io.sockets.on ('connection', function (socket){
 setInterval (function () {
     var playerDataPack = []; //The list of all player's position as a packet.
     var projectileDataPack = []; //The list of all projectile data as a packet.
+    var particleEffectDataPack = [];
 
     //This is called for every instance of player
     //Use it as gameplay update function for each player
@@ -919,6 +928,11 @@ setInterval (function () {
         else{
             particle.UpdateFunc ();
             particle.age++;
+            particleEffectDataPack.push ({
+                id: particle.id,
+                x: particle.x_pos,
+                y: particle.y_pos
+            });
         }
     }
 
@@ -959,7 +973,7 @@ setInterval (function () {
         }
     }
 
-    var dataPackage = {playerDataPack, projectileDataPack};
+    var dataPackage = {playerDataPack, projectileDataPack, particleEffectDataPack};
 
     //This is called for every socket (connection)
     //This sends data to the client

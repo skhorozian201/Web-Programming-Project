@@ -20,6 +20,7 @@
 			<img id = "paladinShockwaveEffect" src = "img/PaladinShockwaveParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "paladinUltEffect" src = "img/PaladinUltParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "paladinHealEffect" src = "img/PaladinHealParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "mageBarrierEffect" src = "img/MageBarrierEffect.png" style = "width:10px; height:10px; display: none;" ></img>
 			
 
 		</a>
@@ -65,11 +66,12 @@
 						document.getElementById("mageDeadRight"), 
 						document.getElementById("mageDeadLeft")]; 
 
-		var particleImages = [document.getElementById ("hammerImageAnchor")];
+		var projectileImages = [document.getElementById ("hammerImageAnchor")];
 
 		var particleEffectImages = 	[document.getElementById ("paladinHealEffect"),
 									document.getElementById ("paladinShockwaveEffect"),
-									document.getElementById ("paladinHealEffect")];
+									document.getElementById ("paladinUltEffect"),
+									document.getElementById ("mageBarrierEffect")];
 
 		var loginNameElement = document.getElementById ("loginUsername");
 		var loginPasswordElement = document.getElementById ("loginPassword");
@@ -164,10 +166,15 @@
 					}
 				}
 
+				for (var i = 0; i < data.particleEffectDataPack.length; i++) {
+					var particle = data.particleEffectDataPack [i];
+					ctx.drawImage (particleEffectImages[id], particle.x, particle.y, 90, 90);
+				}
+
 				for (var i = 0; i < data.projectileDataPack.length; i++)
 				{
 					var projectile = data.projectileDataPack [i];
-					ctx.drawImage (particleImages[0], projectile.x - 20, projectile.y - 20, 40, 40);
+					ctx.drawImage (projectileImages[0], projectile.x - 20, projectile.y - 20, 40, 40);
 				}
 			}
 
