@@ -697,14 +697,14 @@ io.sockets.on ('connection', function (socket){
             var database = db.db("mydb");
 
             //after connecting check the login credentials
-            database.collection("users").findOne({}, function(err, result) {
+            database.collection("users").find({}).toArray(function(err, result) {
                 if (err) throw err;
                 var found = false;                 
                 for (x in result) {
                     ress = result[x]                    
                     if (ress.username == data.username  ) {
-                        SendResult (false); 
-                        console.log("Username ALready Taken");
+                        SendResult (false,false); 
+                        console.log("Username Already Taken");
                         found = true;
                         break;
                     } 
@@ -713,8 +713,8 @@ io.sockets.on ('connection', function (socket){
                     database.collection("users").insertOne(data, function(err, res) {
                         if (err) throw err;
                         console.log(data.username + " Signed UP");
-                        SendResult(true);
                         CreatePlayer(data);
+                        SendResult(true,true);
                         db.close();
                         });
                 }
@@ -738,15 +738,15 @@ io.sockets.on ('connection', function (socket){
                 for (x in result) {
                     ress = result[x];                    
                     if (ress.username == data.username && ress.password == data.password) {
-                        SendResult (true); //if the login credentials are correct, create a player and send result to the client
                         CreatePlayer(ress);
+                        SendResult (true,true); //if the login credentials are correct, create a player and send result to the client
                         found = true;
                         break;
                     } 
                 };
                 if(!found){
                     console.log("Cant find Username");
-                    SendResult (false); //otherwise just send result to the client
+                    SendResult (false,true); //otherwise just send result to the client
                 }
             });
 
@@ -786,11 +786,22 @@ io.sockets.on ('connection', function (socket){
         PLAYER_LIST [socket.id] = player; //adds the new player to the list
     }
 
-    function SendResult (loginSuccess) { //This sends the result of the login
-        socket.emit ('sendResult', {
-            connected: loginSuccess,
-            id: socket.id
-        }); 
+    function SendResult (loginSuccess,usernameAvailable) { //This sends the result of the login.Created another paramter for signup. To display if the username is take or not.
+        if(loginSuccess){
+            var player = PLAYER_LIST[socket.id]
+            socket.emit ('sendResult', {
+                connected: loginSuccess,
+                id: socket.id,
+                player : player
+            }); 
+        }
+        else{
+            socket.emit ('sendResult', {
+                connected: loginSuccess,
+                username:usernameAvailable,
+                id: socket.id
+            });             
+        }
     }
 
     socket.on ('disconnect',function(){ //When a player disconnects from the game
