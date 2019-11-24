@@ -15,15 +15,24 @@
 			<img id = "mageDeadRight" src = "img/MageDeath.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "mageDeadLeft" src = "img/MageDeath1.png" style = "width:10px; height:10px; display: none;" ></img>
 
+			<img id = "archerRight" src = "img/Archer.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "archerLeft" src = "img/Archer1.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "archerDeadRight" src = "img/ArcherDeath.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "archerDeadLeft" src = "img/ArcherDeath1.png" style = "width:10px; height:10px; display: none;" ></img>
+
 			<img id = "hammerImageAnchor" src = "img/Hammer.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "magePriProjectile" src = "img/MagePrimary.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "mageSecProjectile" src = "img/MageSecondary.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "mageUltProjectile" src = "img/MageUltProjectile.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "archerArrowProjectile" src = "img/ArcherArrow.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "archerUltProjectile" src = "img/ArcherUlt.png" style = "width:10px; height:10px; display: none;" ></img>
 
 			<img id = "paladinShockwaveEffect" src = "img/PaladinShockwaveParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "paladinUltEffect" src = "img/PaladinUltParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "paladinHealEffect" src = "img/PaladinHealParticleEffect.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "mageBarrierEffect" src = "img/MageBarrierEffect.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "archerPowerUpEffect" src = "img/ArcherPowerUp.png" style = "width:10px; height:10px; display: none;" ></img>
+			<img id = "archerMarkEffect" src = "img/ArcherMark.png" style = "width:10px; height:10px; display: none;" ></img>
 			
 			<img id = "iconFrame" src = "img/AbilitySlot.png" style = "width:10px; height:10px; display: none;" ></img>
 			<img id = "iconPaladinQ" src = "img/IconPaladinQ.png" style = "width:10px; height:10px; display: none;" ></img>
@@ -46,7 +55,6 @@
 				<option value="paladin">Paladin</option>
 				<option value="mage">Mage</option>
 				<option value="archer">Archer</option>
-				<option value="rogue">Rogue</option>
 		</select>
 		<button id="loginButton">Login</button>
 		<button id="signupButton">Sign Up</button>
@@ -75,15 +83,24 @@
 						document.getElementById("mageDeadRight"), 
 						document.getElementById("mageDeadLeft")]; 
 
+		var archerImage = 	[document.getElementById("archerRight"),
+							document.getElementById("archerLeft"),
+							document.getElementById("archerDeadRight"),
+							document.getElementById("archerDeadLeft")];
+
 		var projectileImages = 	[document.getElementById ("hammerImageAnchor"),
 								document.getElementById ("magePriProjectile"),
 								document.getElementById ("mageSecProjectile"),
-								document.getElementById ("mageUltProjectile"),];
+								document.getElementById ("mageUltProjectile"),
+								document.getElementById ("archerArrowProjectile"),
+								document.getElementById ("archerUltProjectile")];
 
 		var particleEffectImages = 	[document.getElementById ("paladinHealEffect"),
 									document.getElementById ("paladinShockwaveEffect"),
 									document.getElementById ("paladinUltEffect"),
-									document.getElementById ("mageBarrierEffect")];
+									document.getElementById ("mageBarrierEffect"),
+									document.getElementById ("archerPowerUpEffect"),
+									document.getElementById ("archerMarkEffect")];
 
 		var iconImages = 	[document.getElementById ("iconPaladinQ"),
 							document.getElementById ("iconPaladinE"),
@@ -189,6 +206,18 @@
 							else
 								ctx.drawImage ( mageImage[2], player.x - 80, player.y - 80, 160, 160);
 						}
+					} else if (player.class == "Archer") {
+						if (!player.isRight) {
+							if (!player.isdead)
+								ctx.drawImage ( archerImage[1], player.x - 120, player.y - 80, 160, 160);
+							else 
+								ctx.drawImage ( archerImage[3], player.x - 80, player.y - 80, 160, 160);
+						} else {
+							if (!player.isdead)
+								ctx.drawImage ( archerImage[0], player.x - 80, player.y - 80, 160, 160);
+							else
+								ctx.drawImage ( archerImage[2], player.x - 80, player.y - 80, 160, 160);
+						}
 					}
 				}
 
@@ -233,6 +262,33 @@
 						ctx.fillText (localPlayer.cd3/25, 250, 525);
 					}							
 				} else if (localPlayer.class == "Mage") {
+					if (localPlayer.cd1 <= 0)
+						ctx.drawImage (iconImages[3], 50, 475, 64, 64);
+					else {
+						ctx.fillStyle = "#000000";
+						ctx.fillRect (50, 475, 64, 64);
+						ctx.fillStyle = "#FFFFFF";
+						ctx.fillText (localPlayer.cd1/25, 50, 525);
+					}
+
+					if (localPlayer.cd2 <= 0)
+						ctx.drawImage (iconImages[4], 150, 475, 64, 64);
+					else {
+						ctx.fillStyle = "#000000";
+						ctx.fillRect (150, 475, 64, 64);
+						ctx.fillStyle = "#FFFFFF";
+						ctx.fillText (localPlayer.cd2/25, 150, 525);
+					}
+
+					if (localPlayer.cd3 <= 0)
+						ctx.drawImage (iconImages[5], 250, 475, 64, 64);
+					else {
+						ctx.fillStyle = "#000000";
+						ctx.fillRect (250, 475, 64, 64);
+						ctx.fillStyle = "#FFFFFF";
+						ctx.fillText (localPlayer.cd3/25, 250, 525);
+					}
+				} else if (localPlayer.class == "Archer") {
 					if (localPlayer.cd1 <= 0)
 						ctx.drawImage (iconImages[3], 50, 475, 64, 64);
 					else {
