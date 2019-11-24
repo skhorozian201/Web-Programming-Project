@@ -471,7 +471,7 @@ class Player {
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
                     team2Score ++ ;
                 }
-            if (team2Score ==1 || team1Score ==1){//Whoever reaches 10 points wins
+            if (team2Score ==10 || team1Score ==10){//Whoever reaches 10 points wins
                 for (var i in SOCKET_LIST) {
                     var socket = SOCKET_LIST [i];
                     var player = PLAYER_LIST[i]
@@ -741,12 +741,11 @@ io.sockets.on ('connection', function (socket){
             //after connecting check the login credentials
             database.collection("users").find({}).toArray(function(err, result) {
                 if (err) throw err;
-                console.log(result);
                 var found = false;            
                 for (x in result) {
                     ress = result[x];                    
                     if (ress.username == data.username && ress.password == data.password) {
-                        CreatePlayer(ress);
+                        CreatePlayer(data);
                         SendResult (true,true); //if the login credentials are correct, create a player and send result to the client
                         found = true;
                         break;
@@ -922,12 +921,16 @@ setInterval (function () {
             y: player.y_position,
             name: player.name,
             team: player.team,
+            kills:player.kills,
             maxHealth: player.maxHealth,
             currentHealth: player.currentHealth,
             id: player.id,
             isdead: player.isDead,
             isRight: isFacingRight,
-            class: player.class
+            class: player.class,
+            team1Score:team1Score, 
+            team2Score:team2Score
+
         });
         
     }

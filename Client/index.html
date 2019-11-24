@@ -92,7 +92,6 @@
 		};
 
 		var localPlayerID;
-
 		socket.on ('sendResult', function (data) {
 				localPlayerID = data.id;
 				console.log (localPlayerID);
@@ -104,7 +103,7 @@
 					loginNameElement.disabled = true;
 					loginPasswordElement.disabled = true;
 					classPicker.disabled = true;
-					document.getElementById("loginDiv").innerHTML = "<h2>Welcome " + (data.player.name).toUpperCase() +"<span style = float:right;> Your Team : " +data.player.team+"</span></h2>";
+					document.getElementById("loginDiv").innerHTML = "<h2>Welcome " + (data.player.name).toUpperCase() +"<span style = float:right;> Your Team : " +data.player.team+"</span></h2><h3 id=kills style=color:green;><span style = float:right;></span></h3><h3 id=team2score style = float:right;color:red;></h3>";
 				} 
 				else if (!usernameAvailable){
 					window.alert("     Username Already Taken\n          Try Again");
@@ -131,6 +130,16 @@
 				{
 					var player = data.playerDataPack [i]; 
 					if (player.id == localPlayerID) {
+						if (player.team == 1){
+						document.getElementById("kills").innerHTML = "Your Kills : "+player.kills+"<span style = float:right; color:green;> Your Team Kills : "+player.team1Score+"</span>"
+						document.getElementById("team2score").innerHTML = "Opposite Team kills : "+player.team2Score
+					
+						}
+						else{ 
+						document.getElementById("kills").innerHTML = "Your Kills : "+player.kills+"<span style = float:right; color:green;> Your Team Kills : "+player.team2Score+"</span>"
+						document.getElementById("team2score").innerHTML = "Opposite Team kills : "+player.team1Score
+					
+						}
 						
 					} else {
 
@@ -140,12 +149,13 @@
 						ctx.fillStyle = "#0000A0";
 					else 
 						ctx.fillStyle = "#A00000";
+				
 					ctx.fillText ( player.name, player.x - 80, player.y - 100);
 					ctx.fillStyle = "#FF0000" ;
 					ctx.fillRect ( player.x - 80, player.y - 90, 100, 5 ); 
 					ctx.fillStyle = "#00FF00" ;
 					ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
-
+					
 					if (player.class == "Paladin") {
 						if (!player.isRight) {
 							if (!player.isdead)
@@ -172,6 +182,7 @@
 						}
 					}
 				}
+				}
 
 				for (var i = 0; i < data.particleEffectDataPack.length; i++) {
 					var particle = data.particleEffectDataPack [i];
@@ -183,7 +194,6 @@
 					var projectile = data.projectileDataPack [i];
 					ctx.drawImage (projectileImages[0], projectile.x - 20, projectile.y - 20, 40, 40);
 				}
-			}
 
 		});
 		//For game over.
