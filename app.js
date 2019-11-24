@@ -229,14 +229,15 @@ class PaladinHeal extends Spell {
     }
 
     SpellCast (caster) {
-        caster.actionTimer = 15;
+        caster.spellTimer = 15;
         this.spellCooldown = 250;
 
         var effect = new FollowPlayerEffect (caster.x_position, caster.y_position, caster, 15, 0);
         PARTICLE_EFFECT_LIST.push (effect);
 
         setTimeout ( function () {
-            caster.SendHeal ((caster.maxHealth - caster.currentHealth) * 0.5,caster);
+            caster.SendHeal ((caster.maxHealth - caster.currentHealth) * 0.35,caster);
+            caster.stunTimer = 0;
         }, 150);
     }
 }
@@ -259,7 +260,7 @@ class PaladinDash extends Spell {
         this.x_velo = (Math.cos(angle));
         this.y_velo = (Math.sin(angle));
         this.framesLeft = 10;
-        caster.actionTimer = 10;
+        caster.spellTimer = 10;
         this.spellCooldown = 200;
     }
 
@@ -355,7 +356,7 @@ class MageTeleport extends Spell {
     }
 
     SpellCast (caster) {
-        caster.actionTimer = 15;
+        caster.spellTimer = 15;
         var x_tele = caster.x_position - caster.mousePositionX;
         var y_tele = caster.y_position - caster.mousePositionY;
         this.spellCooldown = 125;
@@ -389,7 +390,7 @@ class MageUlt extends Spell {
     }
 
     SpellCast (caster) {
-        caster.actionTimer = 25;
+        caster.spellTimer = 25;
         this.spellCooldown = 375;
 
         setTimeout ( function () {
@@ -468,7 +469,7 @@ class ArcherUlt extends Spell {
     }
 
     SpellCast (caster) {
-        caster.actionTimer = 25;
+        caster.spellTimer = 25;
         this.spellCooldown = 500;
 
         var angle = Math.atan2 (caster.mousePositionY-caster.y_position,caster.mousePositionX-caster.x_position);
@@ -519,7 +520,8 @@ class Player {
         this.mousePositionX = 0; //This is the y - coordinate for the current mouse positon.
         this.mousePositionY = 0; //This is the x - coordinate for the current mouse positon.
 
-        this.actionTimer = 0; //This is how long the player is preforming an actions for.
+        this.actionTimer = 0; //This is how long the player is not allowed to attack.
+        this.spellTimer = 0; //This is how long the player is casting a spell for.
 
         this.stunTimer = 0; //This is how long the player is disallowed to act.
 
@@ -556,24 +558,22 @@ class Player {
     }
 
     PrimaryAttackFunc () {
-        if (this.actionTimer <= 0 && this.stunTimer <= 0) { //temporary attack function
-        }
+
     }
 
     SecondaryAttackFunc () {
-        if (this.actionTimer <= 0 && this.stunTimer <= 0) { //temporary attack function
-        }
+
     }
 
     CastSpell (spellNumb) {
         if (spellNumb == 0) {
-            if (this.spell1.spellCooldown <= 0 && this.actionTimer <= 0 && this.stunTimer <= 0)
+            if (this.spell1.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0)
                 this.spell1.SpellCast (this);
         } else if (spellNumb == 1) {
-            if (this.spell2.spellCooldown <= 0 && this.actionTimer <= 0 && this.stunTimer <= 0)
+            if (this.spell2.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0)
                 this.spell2.SpellCast (this);
         } else if (spellNumb == 2) {
-            if (this.spell3.spellCooldown <= 0 && this.actionTimer <= 0 && this.stunTimer <= 0)
+            if (this.spell3.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0)
                 this.spell3.SpellCast (this);
         }
     }
@@ -612,8 +612,6 @@ class Player {
         return damage; //Return the damage incase it changes... somehow...
     }
 
-   
-    
 
     //Called to restore current health to this player
     //heal is the number
@@ -664,7 +662,7 @@ class Player {
         this.isUntargetable = true;//Cant hit them
         console.log (this.name + " died.");     
 
-        if (team2Score == team2*3 || team1Score == team1*3){//Whoever reaches 10 points wins
+        if (team2Score == 10 || team1Score == 10){//Whoever reaches 10 points wins
             for (var i in SOCKET_LIST) {
                 var socket = SOCKET_LIST [i];
                 var player = PLAYER_LIST[i]
@@ -719,7 +717,7 @@ class Paladin extends Player {
     }
 
     PrimaryAttackFunc () {
-        if (this.actionTimer <= 0) { //temporary attack function
+        if (this.actionTimer <= 0) { 
             this.actionTimer = 15;
 
             var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
@@ -735,7 +733,7 @@ class Paladin extends Player {
     }
 
     SecondaryAttackFunc () {
-        if (this.actionTimer <= 0) { //temporary attack function
+        if (this.actionTimer <= 0) { 
             this.actionTimer = 25;
             var angle = Math.atan2 (this.mousePositionY-this.y_position,this.mousePositionX-this.x_position);
             var attackProjectile = new PaladinSecondary (this.x_position, this.y_position, angle, 40, 30, this, 12);
@@ -1030,7 +1028,7 @@ setInterval (function () {
     for (var i in PLAYER_LIST) {
         var player = PLAYER_LIST [i];
 
-        if (!player.isDead && player.stunTimer <= 0) {
+        if (!player.isDead && player.stunTimer <= 0 && player.spellTimer <= 0) {
             //This move the player based on the input
             if (player.moveUpInput) {
                 player.x_position += player.moveSpeed;
@@ -1061,6 +1059,10 @@ setInterval (function () {
 
         if (player.stunTimer > 0) {
             player.stunTimer--;
+        }
+
+        if (player.spellTimer > 0) {
+            player.spellTimer--;
         }
 
         if (player.spell1.spellCooldown > 0) {
@@ -1131,7 +1133,7 @@ setInterval (function () {
             for (var i in PLAYER_LIST) {
                 var player = PLAYER_LIST [i];
 
-                if (player != projectile.owner) {
+                if (player != projectile.owner && !player.isDead) {
                     if (GetDistance(player.x_position ,player.y_position, projectile.x_position, projectile.y_position) <= projectile.radius + player.radius) {
                         projectile.OnCollision (player, i);
                     }
