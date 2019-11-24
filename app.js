@@ -594,7 +594,7 @@ class Player {
                 else if (dealer.team == 2){//If dealer is from team2 , give them a point
                     team2Score ++ ;
                 }
-            this.Death ();//Call death function on current player
+                this.Death ();//Call death function on current player
                 
             }
 
@@ -906,12 +906,11 @@ io.sockets.on ('connection', function (socket){
             //after connecting check the login credentials
             database.collection("users").find({}).toArray(function(err, result) {
                 if (err) throw err;
-                console.log(result);
                 var found = false;            
                 for (x in result) {
                     ress = result[x];                    
                     if (ress.username == data.username && ress.password == data.password) {
-                        CreatePlayer(ress);
+                        CreatePlayer(data);
                         SendResult (true,true); //if the login credentials are correct, create a player and send result to the client
                         found = true;
                         break;
@@ -1087,11 +1086,14 @@ setInterval (function () {
             y: player.y_position,
             name: player.name,
             team: player.team,
+            kills:player.kills,
             maxHealth: player.maxHealth,
             currentHealth: player.currentHealth,
             id: player.id,
             isdead: player.isDead,
             isRight: isFacingRight,
+            team1Score:team1Score, 
+            team2Score:team2Score,
             cd1: player.spell1.spellCooldown,
             cd2: player.spell2.spellCooldown,
             cd3: player.spell3.spellCooldown,
