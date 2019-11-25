@@ -72,7 +72,7 @@
 		</body >
 
 	<div id="gameDiv">
-		<canvas id="myCanvas" width="980" height="540" style = "border:3px solid grey;background-color:#d3d3d3;" ></canvas>
+		<canvas id="myCanvas" width="980" height="540" style = "border:5px solid grey;background-color:#d3d3d3;" ></canvas>
 	</div>
 
 	<script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
@@ -175,7 +175,7 @@
 			var localPlayer;
 
 			if (connected){
-				ctx.clearRect (0,0,960,540);
+				ctx.clearRect (0,0,1000,540);
 
 				for (var i = 0; i < data.playerDataPack.length; i++)
 				{

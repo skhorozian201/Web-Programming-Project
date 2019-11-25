@@ -1042,6 +1042,19 @@ setInterval (function () {
             } else if (player.moveLeftInput) {
                 player.y_position -= player.moveSpeed;            
             }
+
+            if (player.x_position > 950) {
+                player.x_position = 950;
+            } else if (player.x_position < 50) {
+                player.x_position = 50;
+            }
+
+            if (player.y_position > 500) {
+                player.y_position = 500;
+            } else if (player.y_position < 80) {
+                player.y_position = 80;
+            }
+        
         
             if (player.actionTimer <= 0) {
                 if (player.primaryAttack) {
