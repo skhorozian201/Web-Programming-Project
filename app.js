@@ -568,13 +568,13 @@ class Player {
 
     CastSpell (spellNumb) {
         if (spellNumb == 0) {
-            if (this.spell1.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0)
+            if (this.spell1.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0 && !this.isDead)
                 this.spell1.SpellCast (this);
         } else if (spellNumb == 1) {
-            if (this.spell2.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0)
+            if (this.spell2.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0 && !this.isDead)
                 this.spell2.SpellCast (this);
         } else if (spellNumb == 2) {
-            if (this.spell3.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0)
+            if (this.spell3.spellCooldown <= 0 && this.stunTimer <= 0 && this.spellTimer <= 0 && !this.isDead)
                 this.spell3.SpellCast (this);
         }
     }
