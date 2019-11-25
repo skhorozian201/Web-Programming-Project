@@ -63,13 +63,17 @@
 			<button id="signupButton">Sign Up</button>
 		</div>
 		
-	<body>
-			<p id ="rightSideText"style='float: right; width: 10em; margin-top:5em';></p>
-	</body>
+		<body>
+			<p id ="priattackdesc";></p>
+			<p id ="secattackdesc";></p>
+			<p id ="qdesc";></p>
+			<p id ="edesc";></p>
+			<p id ="rdesc";></p>
+		</body>
+
 	<div id="gameDiv">
 		<canvas id="myCanvas" width="960" height="540" style = "border:5px solid #000000" ></canvas>
 	</div>
-
 
 	<script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
@@ -177,15 +181,15 @@
 				{
 					var player = data.playerDataPack [i]; 
 					if (player.id == localPlayerID) {
-            localPlayer = player;
+            			localPlayer = player;
 						if (player.team == 1){
-						document.getElementById("kills").innerHTML = "Your Kills : "+player.kills+"<span style = float:right; color:green;> Your Team Kills : "+player.team1Score+"</span>"
-						document.getElementById("team2score").innerHTML = "Opposite Team kills : "+player.team2Score
+							document.getElementById("kills").innerHTML = "Your Kills : "+player.kills+"<span style = float:right; color:green;> Your Team Kills : "+player.team1Score+"</span>"
+							document.getElementById("team2score").innerHTML = "Opposite Team kills : "+player.team2Score
 					
 						}
 						else{ 
-						document.getElementById("kills").innerHTML = "Your Kills : "+player.kills+"<span style = float:right; color:green;> Your Team Kills : "+player.team2Score+"</span>"
-						document.getElementById("team2score").innerHTML = "Opposite Team kills : "+player.team1Score
+							document.getElementById("kills").innerHTML = "Your Kills : "+player.kills+"<span style = float:right; color:green;> Your Team Kills : "+player.team2Score+"</span>"
+							document.getElementById("team2score").innerHTML = "Opposite Team kills : "+player.team1Score
 					
 						}
 						
@@ -205,7 +209,6 @@
 					ctx.fillRect ( player.x - 80, player.y - 90, (player.currentHealth/player.maxHealth) * 100, 5 );
 					
 					if (player.class == "Paladin") {
-						document.getElementById("rightSideText").innerHTML ="Text here"
 						if (!player.isRight) {
 							if (!player.isdead)
 								ctx.drawImage ( paladinImage[1], player.x - 120, player.y - 80, 160, 160);
@@ -218,7 +221,6 @@
 								ctx.drawImage ( paladinImage[2], player.x - 80, player.y - 80, 160, 160);
 						}
 					} else if (player.class == "Mage") {
-						document.getElementById("rightSideText").innerHTML ="Text here"
 						if (!player.isRight) {
 							if (!player.isdead)
 								ctx.drawImage ( mageImage[1], player.x - 120, player.y - 80, 160, 160);
@@ -231,7 +233,6 @@
 								ctx.drawImage ( mageImage[2], player.x - 80, player.y - 80, 160, 160);
 						}
 					} else if (player.class == "Archer") {
-						document.getElementById("rightSideText").innerHTML ="Text here"
 						if (!player.isRight) {
 							if (!player.isdead)
 								ctx.drawImage ( archerImage[1], player.x - 120, player.y - 80, 160, 160);
@@ -259,6 +260,11 @@
 						ctx.drawImage (projectileImages[projectile.id], projectile.x - projectile.rad/2, projectile.y - projectile.rad/2, projectile.rad, projectile.rad);
 				}
 				if (localPlayer.class == "Paladin"){
+					document.getElementById("priattackdesc").innerHTML = "PRIMARY ATTACK: A powerful, melee attack.";
+					document.getElementById("secattackdesc").innerHTML = "SECONDARY ATTACK: A slow, ranged attack.";
+					document.getElementById("qdesc").innerHTML = "Q: Heal for 35% missing health and remove stuns.";
+					document.getElementById("edesc").innerHTML = "E: Charge at mouse direction, creating a shockwave at the end that deals damage and stuns enemies.";
+					document.getElementById("rdesc").innerHTML = "R: For 5 seconds, two-thirds of all damage taken is also reflected to the attacker.";
 					if (localPlayer.cd1 <= 0)
 						ctx.drawImage (iconImages[0], 50, 475, 64, 64);
 					else {
@@ -286,6 +292,11 @@
 						ctx.fillText (localPlayer.cd3/25, 250, 525);
 					}							
 				} else if (localPlayer.class == "Mage") {
+					document.getElementById("priattackdesc").innerHTML = "PRIMARY ATTACK: A quick, ranged attack that builds up mana.";
+					document.getElementById("secattackdesc").innerHTML = "SECONDARY ATTACK: A ranged attack that consumes built up mana to gain size, damage, and speed.";
+					document.getElementById("qdesc").innerHTML = "Q: Creates a barrier for 2 seconds that converts all damage taken into healing.";
+					document.getElementById("edesc").innerHTML = "E: Teleport to mouse location.";
+					document.getElementById("rdesc").innerHTML = "R: For 4 seconds, create an area around you that constantly damages enemies in it.";
 					if (localPlayer.cd1 <= 0)
 						ctx.drawImage (iconImages[3], 50, 475, 64, 64);
 					else {
@@ -313,6 +324,11 @@
 						ctx.fillText (localPlayer.cd3/25, 250, 525);
 					}
 				} else if (localPlayer.class == "Archer") {
+					document.getElementById("priattackdesc").innerHTML = "PRIMARY ATTACK: A quick, ranged attack.";
+					document.getElementById("secattackdesc").innerHTML = "SECONDARY ATTACK: Fire three slow shots.";
+					document.getElementById("qdesc").innerHTML = "Q: Triple the rate of fire for 4 seconds.";
+					document.getElementById("edesc").innerHTML = "E: Attacks mark enemies. Only one mark can exist at a time. Activate to consume that mark and stun the target.";
+					document.getElementById("rdesc").innerHTML = "R: Fire a quick arrow that executes the first enemy hit if they're below 50% health.";
 					if (localPlayer.cd1 <= 0)
 						ctx.drawImage (iconImages[6], 50, 475, 64, 64);
 					else {

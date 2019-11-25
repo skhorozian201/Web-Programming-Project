@@ -196,7 +196,8 @@ class ArcherUltProjectile extends Projectile {
     OnCollision (hit, i) { //This is called upon collision. Hit is the player hit.
         if (hit.team != this.owner.team){
             if (hit.currentHealth/hit.maxHealth <= 0.5) {
-                hit.Death ();
+                hit.currentHealth = 0;
+                this.owner.DealDamage (1,hit);
             }
             this.DestroyThis (i);
         }
