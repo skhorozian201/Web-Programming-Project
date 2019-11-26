@@ -12,7 +12,7 @@ app.get ('/', function (req, res) {
 
 app.use (express.static('client')); //Allows for access of static files from within the "client" folder
 
-serv.listen (2000); //listens to port :2000
+serv.listen ( process.env.PORT || 2000); //listens to port :2000
 
 console.log ("Server Initialized");
   
